@@ -25,7 +25,8 @@ import (
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
 )
 
-// modelServerFactory is a wrapper for extending metrics.PodMetrics to ModelServer.
+// modelServerFactory is a wrapper for extending the metrics.PodMetrics factory
+// to return ModelServer.
 type modelServerFactory struct {
 	delegate metrics.PodMetricsFactory
 }
@@ -44,7 +45,12 @@ func (msf *modelServerFactory) RefreshInterval() time.Duration {
 }
 
 // NewModelServer returns a new ModelServer for the specified Pod, adding it to the data store.
+// @TODO temporary wrapper
 func (msf *modelServerFactory) NewPodMetrics(parent context.Context, p *corev1.Pod, ds metrics.Datastore) metrics.PodMetrics {
-	ms := NewModelServer(msf.delegate.NewPodMetrics(parent, p, ds))
-	return ms
+	return msf.NewModelServer(parent, p, ds)
+}
+
+// NewModelServer returns a new model server
+func (msf *modelServerFactory) NewModelServer(parent context.Context, p *corev1.Pod, ds Datastore) metrics.PodMetrics {
+	return NewModelServer(msf.delegate.NewPodMetrics(parent, p, &datastoreAdapter{inner: ds}))
 }
