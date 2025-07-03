@@ -52,23 +52,28 @@ func (fpm *FakePodMetrics) StopRefreshLoop() {} // noop
 
 type FakePodMetricsClient struct {
 	errMu sync.RWMutex
+	// TODO: Fetching is done from an IP address so more likely that we should
+	// be using string as the map key. Keep as is for compatibility with existing
+	// tests which might not have defined and unique IP addresses.
 	Err   map[types.NamespacedName]error
 	resMu sync.RWMutex
 	Res   map[types.NamespacedName]*MetricsState
 }
 
-func (f *FakePodMetricsClient) FetchMetrics(ctx context.Context, pod *k8s.PodInfo, existing *MetricsState, port int32) (*MetricsState, error) {
+func (f *FakePodMetricsClient) FetchMetrics(ctx context.Context, endpoint llmServer, existing *MetricsState, port int32) (*MetricsState, error) {
+	id := endpoint.GetNamespacedName() // TODO: see above note on struct definition
+
 	f.errMu.RLock()
-	err, ok := f.Err[pod.NamespacedName]
+	err, ok := f.Err[id]
 	f.errMu.RUnlock()
 	if ok {
 		return nil, err
 	}
 	f.resMu.RLock()
-	res, ok := f.Res[pod.NamespacedName]
+	res, ok := f.Res[id]
 	f.resMu.RUnlock()
 	if !ok {
-		return nil, fmt.Errorf("no pod found: %v", pod.NamespacedName)
+		return nil, fmt.Errorf("no pod found: %v", id)
 	}
 	log.FromContext(ctx).V(logutil.VERBOSE).Info("Fetching metrics for pod", "existing", existing, "new", res)
 	return res.Clone(), nil

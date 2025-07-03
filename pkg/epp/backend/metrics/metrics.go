@@ -26,8 +26,6 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 	"go.uber.org/multierr"
-
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/k8s"
 )
 
 const (
@@ -42,25 +40,29 @@ type PodMetricsClientImpl struct {
 }
 
 // FetchMetrics fetches metrics from a given pod, clones the existing metrics object and returns an updated one.
-func (p *PodMetricsClientImpl) FetchMetrics(ctx context.Context, pod *k8s.PodInfo, existing *MetricsState, port int32) (*MetricsState, error) {
+func (p *PodMetricsClientImpl) FetchMetrics(ctx context.Context, endpoint llmServer, existing *MetricsState, port int32) (*MetricsState, error) {
+	podName := endpoint.GetNamespacedName()
+	ipAddress := endpoint.GetIPAddress()
+	target := fmt.Sprintf("%s (%s)", podName, ipAddress)
+
 	// Currently the metrics endpoint is hard-coded, which works with vLLM.
 	// TODO(https://github.com/kubernetes-sigs/gateway-api-inference-extension/issues/16): Consume this from InferencePool config.
-	url := "http://" + pod.Address + ":" + strconv.Itoa(int(port)) + "/metrics"
+	url := "http://" + ipAddress + ":" + strconv.Itoa(int(port)) + "/metrics"
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %v", err)
+		return nil, fmt.Errorf("failed to create request to %s: %v", target, err)
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch metrics from %s: %w", pod.NamespacedName, err)
+		return nil, fmt.Errorf("failed to fetch metrics from %s: %w", target, err)
 	}
 	defer func() {
 		_ = resp.Body.Close()
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code from %s: %v", pod.NamespacedName, resp.StatusCode)
+		return nil, fmt.Errorf("unexpected status code from %s: %v", target, resp.StatusCode)
 	}
 
 	parser := expfmt.TextParser{}

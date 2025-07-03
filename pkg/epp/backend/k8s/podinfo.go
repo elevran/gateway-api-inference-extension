@@ -46,6 +46,7 @@ func FromAPIPod(pod *corev1.Pod) *PodInfo {
 	}
 }
 
+// String returns a string representation of the pod.
 func (p *PodInfo) String() string {
 	if p == nil {
 		return ""
@@ -53,10 +54,12 @@ func (p *PodInfo) String() string {
 	return fmt.Sprintf("%+v", *p)
 }
 
+// Clone returns a full copy of the object.
 func (p *PodInfo) Clone() *PodInfo {
 	if p == nil {
 		return nil
 	}
+
 	clonedLabels := make(map[string]string, len(p.Labels))
 	for key, value := range p.Labels {
 		clonedLabels[key] = value
@@ -69,4 +72,14 @@ func (p *PodInfo) Clone() *PodInfo {
 		Address: p.Address,
 		Labels:  clonedLabels,
 	}
+}
+
+// GetNamespacedName gets the namespace name of the Pod.
+func (p *PodInfo) GetNamespacedName() types.NamespacedName {
+	return p.NamespacedName
+}
+
+// GetIPAddress returns the Pod's IP address.
+func (p *PodInfo) GetIPAddress() string {
+	return p.Address
 }

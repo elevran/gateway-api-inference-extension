@@ -48,10 +48,6 @@ type podMetrics struct {
 	logger logr.Logger
 }
 
-type PodMetricsClient interface {
-	FetchMetrics(ctx context.Context, pod *k8s.PodInfo, existing *MetricsState, port int32) (*MetricsState, error)
-}
-
 func (pm *podMetrics) String() string {
 	return fmt.Sprintf("Pod: %v; Metrics: %v", pm.GetPod(), pm.GetMetrics())
 }

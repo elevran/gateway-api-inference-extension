@@ -14,39 +14,38 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package metrics is a library to interact with backend metrics.
 package metrics
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
 
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/k8s"
 )
 
-type PodMetrics interface {
-	GetPod() *k8s.PodInfo
-	GetMetrics() *MetricsState
-	UpdatePod(*corev1.Pod)
-	StopRefreshLoop()
-	String() string
+type PodMetricsFactory struct {
+	pmc                    PodMetricsClient
+	refreshMetricsInterval time.Duration
 }
 
-type llmServer interface {
-	GetNamespacedName() types.NamespacedName
-	GetIPAddress() string
-}
-
-type PodMetricsClient interface {
-	FetchMetrics(ctx context.Context, s llmServer, existing *MetricsState, port int32) (*MetricsState, error)
-}
-
-func NewPodMetricsFactory(pmc PodMetricsClient, refreshMetricsInterval time.Duration) *PodMetricsFactory {
-	return &PodMetricsFactory{
-		pmc:                    pmc,
-		refreshMetricsInterval: refreshMetricsInterval,
+func (f *PodMetricsFactory) NewPodMetrics(parentCtx context.Context, in *corev1.Pod, ds Datastore) PodMetrics {
+	pod := k8s.FromAPIPod(in)
+	pm := &podMetrics{
+		pmc:       f.pmc,
+		ds:        ds,
+		interval:  f.refreshMetricsInterval,
+		startOnce: sync.Once{},
+		stopOnce:  sync.Once{},
+		done:      make(chan struct{}),
+		logger:    log.FromContext(parentCtx).WithValues("pod", pod.NamespacedName),
 	}
+	pm.pod.Store(pod)
+	pm.metrics.Store(NewMetricsState())
+
+	pm.startRefreshLoop(parentCtx)
+	return pm
 }
