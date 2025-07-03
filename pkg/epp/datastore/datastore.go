@@ -28,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
 	"sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
 	logutil "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/util/logging"
@@ -72,7 +73,7 @@ type Datastore interface {
 	Clear()
 }
 
-func NewDatastore(parentCtx context.Context, pmf *backendmetrics.PodMetricsFactory) Datastore {
+func NewDatastore(parentCtx context.Context, pmf backendmetrics.PodMetricsFactory) Datastore {
 	store := &datastore{
 		parentCtx:       parentCtx,
 		poolAndModelsMu: sync.RWMutex{},
@@ -93,7 +94,7 @@ type datastore struct {
 	models map[string]*v1alpha2.InferenceModel
 	// key: types.NamespacedName, value: backendmetrics.PodMetrics
 	pods *sync.Map
-	pmf  *backendmetrics.PodMetricsFactory
+	pmf  backendmetrics.PodMetricsFactory
 }
 
 func (ds *datastore) Clear() {

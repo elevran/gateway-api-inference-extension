@@ -34,6 +34,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/k8s"
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datastore"
@@ -92,7 +93,7 @@ func TestDirector_HandleRequest(t *testing.T) {
 		ObjRef()
 
 	// Datastore setup
-	pmf := backendmetrics.NewPodMetricsFactory(&backendmetrics.FakePodMetricsClient{}, time.Second)
+	pmf := backend.NewModelServerFactory(&backendmetrics.FakePodMetricsClient{}, time.Second)
 	ds := datastore.NewDatastore(t.Context(), pmf)
 	ds.ModelSetIfOlder(imFoodReview)
 	ds.ModelSetIfOlder(imFoodReviewResolve)
@@ -509,7 +510,7 @@ func TestGetCandidatePodsForScheduling(t *testing.T) {
 		},
 	}
 
-	pmf := backendmetrics.NewPodMetricsFactory(&backendmetrics.FakePodMetricsClient{}, time.Second)
+	pmf := backend.NewModelServerFactory(&backendmetrics.FakePodMetricsClient{}, time.Second)
 	ds := datastore.NewDatastore(t.Context(), pmf)
 	for _, testPod := range testInput {
 		ds.PodUpdateOrAddIfNotExist(testPod)

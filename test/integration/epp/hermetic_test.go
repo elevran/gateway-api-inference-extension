@@ -57,6 +57,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	"sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/k8s"
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datastore"
@@ -1015,7 +1016,7 @@ func BeforeSuite() func() {
 
 	serverRunner = server.NewDefaultExtProcServerRunner()
 	serverRunner.TestPodMetricsClient = &backendmetrics.FakePodMetricsClient{}
-	pmf := backendmetrics.NewPodMetricsFactory(serverRunner.TestPodMetricsClient, 10*time.Millisecond)
+	pmf := backend.NewModelServerFactory(serverRunner.TestPodMetricsClient, 10*time.Millisecond)
 	// Adjust from defaults
 	serverRunner.PoolNamespacedName = types.NamespacedName{Name: testPoolName, Namespace: testNamespace}
 	serverRunner.Datastore = datastore.NewDatastore(context.Background(), pmf)

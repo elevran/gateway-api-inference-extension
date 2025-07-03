@@ -32,6 +32,7 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend"
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
 	testutil "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/util/testing"
 )
@@ -80,7 +81,7 @@ func TestPool(t *testing.T) {
 			fakeClient := fake.NewClientBuilder().
 				WithScheme(scheme).
 				Build()
-			pmf := backendmetrics.NewPodMetricsFactory(&backendmetrics.FakePodMetricsClient{}, time.Second)
+			pmf := backend.NewModelServerFactory(&backendmetrics.FakePodMetricsClient{}, time.Second)
 			datastore := NewDatastore(context.Background(), pmf)
 			_ = datastore.PoolSet(context.Background(), fakeClient, tt.inferencePool)
 			gotPool, gotErr := datastore.PoolGet()
@@ -212,7 +213,7 @@ func TestModel(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			pmf := backendmetrics.NewPodMetricsFactory(&backendmetrics.FakePodMetricsClient{}, time.Second)
+			pmf := backend.NewModelServerFactory(&backendmetrics.FakePodMetricsClient{}, time.Second)
 			ds := NewDatastore(t.Context(), pmf)
 			for _, m := range test.existingModels {
 				ds.ModelSetIfOlder(m)
@@ -335,7 +336,7 @@ func TestMetrics(t *testing.T) {
 			fakeClient := fake.NewClientBuilder().
 				WithScheme(scheme).
 				Build()
-			pmf := backendmetrics.NewPodMetricsFactory(test.pmc, time.Millisecond)
+			pmf := backend.NewModelServerFactory(test.pmc, time.Millisecond)
 			ds := NewDatastore(ctx, pmf)
 			_ = ds.PoolSet(ctx, fakeClient, inferencePool)
 			for _, pod := range test.storePods {
@@ -428,7 +429,7 @@ func TestPods(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			ctx := context.Background()
-			pmf := backendmetrics.NewPodMetricsFactory(&backendmetrics.FakePodMetricsClient{}, time.Second)
+			pmf := backend.NewModelServerFactory(&backendmetrics.FakePodMetricsClient{}, time.Second)
 			ds := NewDatastore(t.Context(), pmf)
 			for _, pod := range test.existingPods {
 				ds.PodUpdateOrAddIfNotExist(pod)

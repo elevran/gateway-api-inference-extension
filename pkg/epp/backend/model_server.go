@@ -37,6 +37,7 @@ type ModelServer interface {
 	// metrics handling
 	GetMetrics() *metrics.MetricsState
 	UpdateMetrics(*metrics.MetricsState)
+	StopRefreshLoop()
 	// extended attributes
 	GetAttribute(name string) (Cloneable, bool)
 	UpdateAttribute(name string, value Cloneable)
@@ -53,9 +54,13 @@ type modelServer struct {
 	xattr attributes
 }
 
-// NewModelServer()
-func NewModelServer() ModelServer {
+var _ metrics.PodMetrics = &modelServer{}
+var _ ModelServer = &modelServer{}
+
+// NewModelServer returns a new instance representing a model server
+func NewModelServer(pm metrics.PodMetrics) ModelServer {
 	return &modelServer{
+		pm:    pm,
 		xattr: *newAttributes(),
 	}
 }

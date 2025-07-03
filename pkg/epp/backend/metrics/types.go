@@ -35,18 +35,18 @@ type PodMetrics interface {
 	String() string
 }
 
+type PodMetricsFactory interface {
+	RefreshInterval() time.Duration
+	NewPodMetrics(parent context.Context, p *corev1.Pod, ds Datastore) PodMetrics
+}
+
+// llmServer is an internal interface defining for expectations of
+// endpoints passed to PodMetricsClient
 type llmServer interface {
 	GetNamespacedName() types.NamespacedName
 	GetIPAddress() string
 }
 
 type PodMetricsClient interface {
-	FetchMetrics(ctx context.Context, s llmServer, existing *MetricsState, port int32) (*MetricsState, error)
-}
-
-func NewPodMetricsFactory(pmc PodMetricsClient, refreshMetricsInterval time.Duration) *PodMetricsFactory {
-	return &PodMetricsFactory{
-		pmc:                    pmc,
-		refreshMetricsInterval: refreshMetricsInterval,
-	}
+	FetchMetrics(ctx context.Context, endpoint llmServer, existing *MetricsState, port int32) (*MetricsState, error)
 }

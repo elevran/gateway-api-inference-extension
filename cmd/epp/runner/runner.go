@@ -38,6 +38,7 @@ import (
 
 	conformance_epp "sigs.k8s.io/gateway-api-inference-extension/conformance/testing-epp"
 	"sigs.k8s.io/gateway-api-inference-extension/internal/runnable"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend"
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/common/config/loader"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datastore"
@@ -188,7 +189,7 @@ func (r *Runner) Run(ctx context.Context) error {
 		return err
 	}
 	verifyMetricMapping(*mapping, setupLog)
-	pmf := backendmetrics.NewPodMetricsFactory(&backendmetrics.PodMetricsClientImpl{MetricMapping: mapping}, *refreshMetricsInterval)
+	pmf := backend.NewModelServerFactory(&backendmetrics.PodMetricsClientImpl{MetricMapping: mapping}, *refreshMetricsInterval)
 
 	datastore := datastore.NewDatastore(ctx, pmf)
 
