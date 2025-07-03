@@ -21,7 +21,8 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend"
+
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/k8s"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/framework"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/types"
 )
@@ -40,7 +41,7 @@ func TestFilter(t *testing.T) {
 			filter: &HeaderBasedTestingFilter{},
 			input: []types.Pod{
 				&types.PodMetrics{
-					Pod: &backend.Pod{
+					PodInfo: &k8s.PodInfo{
 						Address: "test-endpoint",
 					},
 				},
@@ -53,7 +54,7 @@ func TestFilter(t *testing.T) {
 			filter: &HeaderBasedTestingFilter{},
 			input: []types.Pod{
 				&types.PodMetrics{
-					Pod: &backend.Pod{
+					PodInfo: &k8s.PodInfo{
 						Address: "test-endpoint-unmatch",
 					},
 				},
@@ -66,14 +67,14 @@ func TestFilter(t *testing.T) {
 			filter: &HeaderBasedTestingFilter{},
 			input: []types.Pod{
 				&types.PodMetrics{
-					Pod: &backend.Pod{
+					PodInfo: &k8s.PodInfo{
 						Address: "test-endpoint",
 					},
 				},
 			},
 			output: []types.Pod{
 				&types.PodMetrics{
-					Pod: &backend.Pod{
+					PodInfo: &k8s.PodInfo{
 						Address: "test-endpoint",
 					},
 				},
@@ -85,29 +86,29 @@ func TestFilter(t *testing.T) {
 			filter: &HeaderBasedTestingFilter{},
 			input: []types.Pod{
 				&types.PodMetrics{
-					Pod: &backend.Pod{
+					PodInfo: &k8s.PodInfo{
 						Address: "test-endpoint1",
 					},
 				},
 				&types.PodMetrics{
-					Pod: &backend.Pod{
+					PodInfo: &k8s.PodInfo{
 						Address: "test-endpoint2",
 					},
 				},
 				&types.PodMetrics{
-					Pod: &backend.Pod{
+					PodInfo: &k8s.PodInfo{
 						Address: "test-endpoint3",
 					},
 				},
 			},
 			output: []types.Pod{
 				&types.PodMetrics{
-					Pod: &backend.Pod{
+					PodInfo: &k8s.PodInfo{
 						Address: "test-endpoint3",
 					},
 				},
 				&types.PodMetrics{
-					Pod: &backend.Pod{
+					PodInfo: &k8s.PodInfo{
 						Address: "test-endpoint2",
 					},
 				},

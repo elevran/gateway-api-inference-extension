@@ -24,7 +24,8 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend"
+
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/k8s"
 )
 
 func NewPodMetricsFactory(pmc PodMetricsClient, refreshMetricsInterval time.Duration) *PodMetricsFactory {
@@ -40,7 +41,7 @@ type PodMetricsFactory struct {
 }
 
 func (f *PodMetricsFactory) NewPodMetrics(parentCtx context.Context, in *corev1.Pod, ds Datastore) PodMetrics {
-	pod := toInternalPod(in)
+	pod := k8s.FromAPIPod(in)
 	pm := &podMetrics{
 		pmc:       f.pmc,
 		ds:        ds,
@@ -58,7 +59,7 @@ func (f *PodMetricsFactory) NewPodMetrics(parentCtx context.Context, in *corev1.
 }
 
 type PodMetrics interface {
-	GetPod() *backend.Pod
+	GetPod() *k8s.PodInfo
 	GetMetrics() *MetricsState
 	UpdatePod(*corev1.Pod)
 	StopRefreshLoop()

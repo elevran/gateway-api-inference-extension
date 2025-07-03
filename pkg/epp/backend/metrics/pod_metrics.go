@@ -25,9 +25,8 @@ import (
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
 
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/k8s"
 	logutil "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/util/logging"
 )
 
@@ -36,7 +35,7 @@ const (
 )
 
 type podMetrics struct {
-	pod      atomic.Pointer[backend.Pod]
+	pod      atomic.Pointer[k8s.PodInfo]
 	metrics  atomic.Pointer[MetricsState]
 	pmc      PodMetricsClient
 	ds       Datastore
@@ -50,14 +49,14 @@ type podMetrics struct {
 }
 
 type PodMetricsClient interface {
-	FetchMetrics(ctx context.Context, pod *backend.Pod, existing *MetricsState, port int32) (*MetricsState, error)
+	FetchMetrics(ctx context.Context, pod *k8s.PodInfo, existing *MetricsState, port int32) (*MetricsState, error)
 }
 
 func (pm *podMetrics) String() string {
 	return fmt.Sprintf("Pod: %v; Metrics: %v", pm.GetPod(), pm.GetMetrics())
 }
 
-func (pm *podMetrics) GetPod() *backend.Pod {
+func (pm *podMetrics) GetPod() *k8s.PodInfo {
 	return pm.pod.Load()
 }
 
@@ -65,23 +64,8 @@ func (pm *podMetrics) GetMetrics() *MetricsState {
 	return pm.metrics.Load()
 }
 
-func (pm *podMetrics) UpdatePod(pod *corev1.Pod) {
-	pm.pod.Store(toInternalPod(pod))
-}
-
-func toInternalPod(pod *corev1.Pod) *backend.Pod {
-	labels := make(map[string]string, len(pod.GetLabels()))
-	for key, value := range pod.GetLabels() {
-		labels[key] = value
-	}
-	return &backend.Pod{
-		NamespacedName: types.NamespacedName{
-			Name:      pod.Name,
-			Namespace: pod.Namespace,
-		},
-		Address: pod.Status.PodIP,
-		Labels:  labels,
-	}
+func (pm *podMetrics) UpdatePod(p *corev1.Pod) {
+	pm.pod.Store(k8s.FromAPIPod(p))
 }
 
 // start starts a goroutine exactly once to periodically update metrics. The goroutine will be

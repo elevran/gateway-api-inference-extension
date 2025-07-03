@@ -26,7 +26,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/k8s"
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
 )
 
@@ -47,7 +47,7 @@ func (fds *mockDatastore) PodGetAll() []backendmetrics.PodMetrics {
 
 func newMockPodMetrics(name string, metrics *backendmetrics.MetricsState) *backendmetrics.FakePodMetrics {
 	return &backendmetrics.FakePodMetrics{
-		Pod: &backend.Pod{
+		Pod: &k8s.PodInfo{
 			NamespacedName: types.NamespacedName{Name: name, Namespace: "ns1"},
 		},
 		Metrics: metrics,

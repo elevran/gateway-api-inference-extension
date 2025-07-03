@@ -24,8 +24,9 @@ import (
 	pb "github.com/envoyproxy/go-control-plane/envoy/service/ext_proc/v3"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/k8s"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/handlers"
 	testutil "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/util/testing"
 	"sigs.k8s.io/gateway-api-inference-extension/test/utils"
@@ -187,6 +188,6 @@ func (ts *testDirector) HandleResponse(ctx context.Context, reqCtx *handlers.Req
 	return reqCtx, nil
 }
 
-func (ts *testDirector) GetRandomPod() *backend.Pod {
+func (ts *testDirector) GetRandomPod() *k8s.PodInfo {
 	return nil
 }

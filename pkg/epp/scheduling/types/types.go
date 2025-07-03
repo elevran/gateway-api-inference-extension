@@ -19,7 +19,7 @@ package types
 import (
 	"fmt"
 
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/k8s"
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
 )
 
@@ -40,7 +40,7 @@ func (r *LLMRequest) String() string {
 }
 
 type Pod interface {
-	GetPod() *backend.Pod
+	GetPod() *k8s.PodInfo
 	GetMetrics() *backendmetrics.MetricsState
 	String() string
 }
@@ -57,8 +57,8 @@ func (pm *PodMetrics) String() string {
 	return fmt.Sprintf("%+v", *pm)
 }
 
-func (pm *PodMetrics) GetPod() *backend.Pod {
-	return pm.Pod
+func (pm *PodMetrics) GetPod() *k8s.PodInfo {
+	return pm.PodInfo
 }
 
 func (pm *PodMetrics) GetMetrics() *backendmetrics.MetricsState {
@@ -66,14 +66,14 @@ func (pm *PodMetrics) GetMetrics() *backendmetrics.MetricsState {
 }
 
 type PodMetrics struct {
-	*backend.Pod
+	*k8s.PodInfo
 	*backendmetrics.MetricsState
 }
 
 func ToSchedulerPodMetrics(pods []backendmetrics.PodMetrics) []Pod {
 	pm := make([]Pod, 0, len(pods))
 	for _, pod := range pods {
-		pm = append(pm, &PodMetrics{Pod: pod.GetPod().Clone(), MetricsState: pod.GetMetrics().Clone()})
+		pm = append(pm, &PodMetrics{PodInfo: pod.GetPod().Clone(), MetricsState: pod.GetMetrics().Clone()})
 	}
 	return pm
 }

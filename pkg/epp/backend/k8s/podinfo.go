@@ -14,28 +14,46 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package backend
+package k8s
 
 import (
 	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
-type Pod struct {
+// PodInfo represents the relevant Kubernetes Pod state of an inference server.
+type PodInfo struct {
 	NamespacedName types.NamespacedName
 	Address        string
 	Labels         map[string]string
 }
 
-func (p *Pod) String() string {
+// FromAPIPod converts a Kubernetes API Pod to its internal representation.
+func FromAPIPod(pod *corev1.Pod) *PodInfo {
+	labels := make(map[string]string, len(pod.GetLabels()))
+	for key, value := range pod.GetLabels() {
+		labels[key] = value
+	}
+	return &PodInfo{
+		NamespacedName: types.NamespacedName{
+			Name:      pod.Name,
+			Namespace: pod.Namespace,
+		},
+		Address: pod.Status.PodIP,
+		Labels:  labels,
+	}
+}
+
+func (p *PodInfo) String() string {
 	if p == nil {
 		return ""
 	}
 	return fmt.Sprintf("%+v", *p)
 }
 
-func (p *Pod) Clone() *Pod {
+func (p *PodInfo) Clone() *PodInfo {
 	if p == nil {
 		return nil
 	}
@@ -43,7 +61,7 @@ func (p *Pod) Clone() *Pod {
 	for key, value := range p.Labels {
 		clonedLabels[key] = value
 	}
-	return &Pod{
+	return &PodInfo{
 		NamespacedName: types.NamespacedName{
 			Name:      p.NamespacedName.Name,
 			Namespace: p.NamespacedName.Namespace,

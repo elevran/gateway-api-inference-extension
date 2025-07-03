@@ -55,8 +55,9 @@ import (
 	crmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+
 	"sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/k8s"
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datastore"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/metrics"
@@ -143,7 +144,7 @@ func TestFullDuplexStreamed_KubeInferenceModelRequest(t *testing.T) {
 	tests := []struct {
 		name              string
 		requests          []*extProcPb.ProcessingRequest
-		pods              map[*backend.Pod]*backendmetrics.MetricsState
+		pods              map[*k8s.PodInfo]*backendmetrics.MetricsState
 		wantResponses     []*extProcPb.ProcessingResponse
 		wantMetrics       map[string]string
 		wantErr           bool
@@ -861,7 +862,7 @@ func TestFullDuplexStreamed_KubeInferenceModelRequest(t *testing.T) {
 	}
 }
 
-func setUpHermeticServer(t *testing.T, podAndMetrics map[*backend.Pod]*backendmetrics.MetricsState) (client extProcPb.ExternalProcessor_ProcessClient, cleanup func()) {
+func setUpHermeticServer(t *testing.T, podAndMetrics map[*k8s.PodInfo]*backendmetrics.MetricsState) (client extProcPb.ExternalProcessor_ProcessClient, cleanup func()) {
 	// Reconfigure the TestPodMetricsClient.
 	res := map[types.NamespacedName]*backendmetrics.MetricsState{}
 	for pod, metrics := range podAndMetrics {
@@ -937,8 +938,8 @@ func setUpHermeticServer(t *testing.T, podAndMetrics map[*backend.Pod]*backendme
 	}
 }
 
-func fakePod(index int) *backend.Pod {
-	return &backend.Pod{
+func fakePod(index int) *k8s.PodInfo {
+	return &k8s.PodInfo{
 		NamespacedName: types.NamespacedName{Name: fmt.Sprintf("pod-%v", index), Namespace: testNamespace},
 		Address:        fmt.Sprintf("192.168.1.%d", index+1),
 		Labels:         make(map[string]string, 0),
@@ -954,8 +955,8 @@ type podState struct {
 }
 
 // newPodStates generates the backend metrics map required by the test setup.
-func newPodStates(states ...podState) map[*backend.Pod]*backendmetrics.MetricsState {
-	res := make(map[*backend.Pod]*backendmetrics.MetricsState)
+func newPodStates(states ...podState) map[*k8s.PodInfo]*backendmetrics.MetricsState {
+	res := make(map[*k8s.PodInfo]*backendmetrics.MetricsState)
 	for _, s := range states {
 		pod := fakePod(s.index)
 		activeModelsMap := make(map[string]int)

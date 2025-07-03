@@ -20,10 +20,10 @@ import (
 	"context"
 	"testing"
 
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend"
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/types"
-
 	k8stypes "k8s.io/apimachinery/pkg/types"
+
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/k8s"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/types"
 )
 
 func TestPickMaxScorePicker(t *testing.T) {
@@ -36,18 +36,18 @@ func TestPickMaxScorePicker(t *testing.T) {
 		{
 			name: "Single max score",
 			scoredPods: []*types.ScoredPod{
-				{Pod: &types.PodMetrics{Pod: &backend.Pod{NamespacedName: k8stypes.NamespacedName{Name: "pod1"}}}, Score: 10},
-				{Pod: &types.PodMetrics{Pod: &backend.Pod{NamespacedName: k8stypes.NamespacedName{Name: "pod2"}}}, Score: 25},
-				{Pod: &types.PodMetrics{Pod: &backend.Pod{NamespacedName: k8stypes.NamespacedName{Name: "pod3"}}}, Score: 15},
+				{Pod: &types.PodMetrics{PodInfo: &k8s.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod1"}}}, Score: 10},
+				{Pod: &types.PodMetrics{PodInfo: &k8s.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod2"}}}, Score: 25},
+				{Pod: &types.PodMetrics{PodInfo: &k8s.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod3"}}}, Score: 15},
 			},
 			wantNames: []string{"pod2"},
 		},
 		{
 			name: "Multiple max scores",
 			scoredPods: []*types.ScoredPod{
-				{Pod: &types.PodMetrics{Pod: &backend.Pod{NamespacedName: k8stypes.NamespacedName{Name: "podA"}}}, Score: 50},
-				{Pod: &types.PodMetrics{Pod: &backend.Pod{NamespacedName: k8stypes.NamespacedName{Name: "podB"}}}, Score: 50},
-				{Pod: &types.PodMetrics{Pod: &backend.Pod{NamespacedName: k8stypes.NamespacedName{Name: "podC"}}}, Score: 30},
+				{Pod: &types.PodMetrics{PodInfo: &k8s.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "podA"}}}, Score: 50},
+				{Pod: &types.PodMetrics{PodInfo: &k8s.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "podB"}}}, Score: 50},
+				{Pod: &types.PodMetrics{PodInfo: &k8s.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "podC"}}}, Score: 30},
 			},
 			wantNames: []string{"podA", "podB"},
 		},

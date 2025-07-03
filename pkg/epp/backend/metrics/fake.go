@@ -24,13 +24,14 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend"
+
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/k8s"
 	logutil "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/util/logging"
 )
 
 // FakePodMetrics is an implementation of PodMetrics that doesn't run the async refresh loop.
 type FakePodMetrics struct {
-	Pod     *backend.Pod
+	Pod     *k8s.PodInfo
 	Metrics *MetricsState
 }
 
@@ -38,14 +39,14 @@ func (fpm *FakePodMetrics) String() string {
 	return fmt.Sprintf("Pod: %v; Metrics: %v", fpm.GetPod(), fpm.GetMetrics())
 }
 
-func (fpm *FakePodMetrics) GetPod() *backend.Pod {
+func (fpm *FakePodMetrics) GetPod() *k8s.PodInfo {
 	return fpm.Pod
 }
 func (fpm *FakePodMetrics) GetMetrics() *MetricsState {
 	return fpm.Metrics
 }
 func (fpm *FakePodMetrics) UpdatePod(pod *corev1.Pod) {
-	fpm.Pod = toInternalPod(pod)
+	fpm.Pod = k8s.FromAPIPod(pod)
 }
 func (fpm *FakePodMetrics) StopRefreshLoop() {} // noop
 
@@ -56,7 +57,7 @@ type FakePodMetricsClient struct {
 	Res   map[types.NamespacedName]*MetricsState
 }
 
-func (f *FakePodMetricsClient) FetchMetrics(ctx context.Context, pod *backend.Pod, existing *MetricsState, port int32) (*MetricsState, error) {
+func (f *FakePodMetricsClient) FetchMetrics(ctx context.Context, pod *k8s.PodInfo, existing *MetricsState, port int32) (*MetricsState, error) {
 	f.errMu.RLock()
 	err, ok := f.Err[pod.NamespacedName]
 	f.errMu.RUnlock()

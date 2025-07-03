@@ -26,7 +26,8 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 	"go.uber.org/multierr"
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend"
+
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/k8s"
 )
 
 const (
@@ -41,7 +42,7 @@ type PodMetricsClientImpl struct {
 }
 
 // FetchMetrics fetches metrics from a given pod, clones the existing metrics object and returns an updated one.
-func (p *PodMetricsClientImpl) FetchMetrics(ctx context.Context, pod *backend.Pod, existing *MetricsState, port int32) (*MetricsState, error) {
+func (p *PodMetricsClientImpl) FetchMetrics(ctx context.Context, pod *k8s.PodInfo, existing *MetricsState, port int32) (*MetricsState, error) {
 	// Currently the metrics endpoint is hard-coded, which works with vLLM.
 	// TODO(https://github.com/kubernetes-sigs/gateway-api-inference-extension/issues/16): Consume this from InferencePool config.
 	url := "http://" + pod.Address + ":" + strconv.Itoa(int(port)) + "/metrics"

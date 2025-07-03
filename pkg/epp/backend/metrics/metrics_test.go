@@ -30,7 +30,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/types"
 
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/k8s"
 	logutil "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/util/logging"
 )
 
@@ -487,7 +487,7 @@ func TestPromToPodMetrics(t *testing.T) {
 // there's no server running on the specified port.
 func TestFetchMetrics(t *testing.T) {
 	ctx := logutil.NewTestLoggerIntoContext(context.Background())
-	pod := &backend.Pod{
+	pod := &k8s.PodInfo{
 		Address: "127.0.0.1",
 		NamespacedName: types.NamespacedName{
 			Namespace: "test",
