@@ -26,7 +26,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	k8stypes "k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend"
+
+	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/types"
 )
 
@@ -39,8 +40,8 @@ func TestPrefixPlugin(t *testing.T) {
 	}
 	plugin := New(config)
 
-	pod1 := &types.PodMetrics{Pod: &backend.Pod{NamespacedName: k8stypes.NamespacedName{Name: "pod1"}}}
-	pod2 := &types.PodMetrics{Pod: &backend.Pod{NamespacedName: k8stypes.NamespacedName{Name: "pod2"}}}
+	pod1 := &types.PodMetrics{PodInfo: &dltypes.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod1"}}}
+	pod2 := &types.PodMetrics{PodInfo: &dltypes.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod2"}}}
 	pods := []types.Pod{pod1, pod2}
 
 	// First request.
@@ -164,7 +165,7 @@ func BenchmarkPrefixPluginStress(b *testing.B) {
 		// Generate increasing-length random prompts
 		prompt := randomPrompt(4 + i)
 		pod := &types.PodMetrics{
-			Pod: &backend.Pod{
+			PodInfo: &dltypes.PodInfo{
 				NamespacedName: k8stypes.NamespacedName{
 					Name: fmt.Sprintf("random-pod-%d", i),
 				},

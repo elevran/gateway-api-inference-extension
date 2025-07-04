@@ -37,7 +37,7 @@ type Metrics struct {
 	UpdateTime time.Time
 }
 
-// String returns a string with all MetricState information
+// String returns a string with all Metric information
 func (m *Metrics) String() string {
 	if m == nil {
 		return ""
@@ -45,7 +45,7 @@ func (m *Metrics) String() string {
 	return fmt.Sprintf("%+v", *m)
 }
 
-// Clone creates a copy of MetricsState and returns its pointer.
+// Clone creates a copy of Metrics and returns its pointer.
 // Clone returns nil if the object being cloned is nil.
 func (m *Metrics) Clone() *Metrics {
 	if m == nil {

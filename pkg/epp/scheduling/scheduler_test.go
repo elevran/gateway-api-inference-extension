@@ -23,8 +23,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 	k8stypes "k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend"
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics" // Import config for thresholds
+	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/types"
 )
 
@@ -57,7 +57,7 @@ func TestSchedule(t *testing.T) {
 			// model being active, and has low KV cache.
 			input: []backendmetrics.PodMetrics{
 				&backendmetrics.FakePodMetrics{
-					Pod: &backend.Pod{NamespacedName: k8stypes.NamespacedName{Name: "pod1"}},
+					Pod: &dltypes.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod1"}},
 					Metrics: &backendmetrics.MetricsState{
 						WaitingQueueSize:    0,
 						KVCacheUsagePercent: 0.2,
@@ -69,7 +69,7 @@ func TestSchedule(t *testing.T) {
 					},
 				},
 				&backendmetrics.FakePodMetrics{
-					Pod: &backend.Pod{NamespacedName: k8stypes.NamespacedName{Name: "pod2"}},
+					Pod: &dltypes.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod2"}},
 					Metrics: &backendmetrics.MetricsState{
 						WaitingQueueSize:    3,
 						KVCacheUsagePercent: 0.1,
@@ -81,7 +81,7 @@ func TestSchedule(t *testing.T) {
 					},
 				},
 				&backendmetrics.FakePodMetrics{
-					Pod: &backend.Pod{NamespacedName: k8stypes.NamespacedName{Name: "pod3"}},
+					Pod: &dltypes.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod3"}},
 					Metrics: &backendmetrics.MetricsState{
 						WaitingQueueSize:    10,
 						KVCacheUsagePercent: 0.2,
@@ -97,7 +97,7 @@ func TestSchedule(t *testing.T) {
 					"default": {
 						TargetPod: &types.ScoredPod{
 							Pod: &types.PodMetrics{
-								Pod: &backend.Pod{NamespacedName: k8stypes.NamespacedName{Name: "pod2"}, Labels: make(map[string]string)},
+								PodInfo: &dltypes.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod2"}, Labels: make(map[string]string)},
 								MetricsState: &backendmetrics.MetricsState{
 									WaitingQueueSize:    3,
 									KVCacheUsagePercent: 0.1,
