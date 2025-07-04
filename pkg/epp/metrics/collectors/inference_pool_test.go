@@ -28,8 +28,10 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/component-base/metrics/testutil"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
 	"sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
+	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datastore"
 )
 
@@ -40,7 +42,7 @@ var (
 		},
 	}
 	pod1NamespacedName = types.NamespacedName{Name: pod1.Name, Namespace: pod1.Namespace}
-	pod1Metrics        = &backendmetrics.MetricsState{
+	pod1Metrics        = &dltypes.Metrics{
 		WaitingQueueSize:    100,
 		KVCacheUsagePercent: 0.2,
 		MaxActiveModels:     2,
@@ -62,7 +64,7 @@ func TestNoMetricsCollected(t *testing.T) {
 
 func TestMetricsCollected(t *testing.T) {
 	pmc := &backendmetrics.FakePodMetricsClient{
-		Res: map[types.NamespacedName]*backendmetrics.MetricsState{
+		Res: map[types.NamespacedName]*dltypes.Metrics{
 			pod1NamespacedName: pod1Metrics,
 		},
 	}

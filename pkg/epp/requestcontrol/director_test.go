@@ -450,12 +450,12 @@ func TestGetCandidatePodsForScheduling(t *testing.T) {
 			metadata: map[string]any{},
 			output: []schedulingtypes.Pod{
 				&schedulingtypes.PodMetrics{
-					PodInfo:      outputPod1,
-					MetricsState: backendmetrics.NewMetricsState(),
+					PodInfo: outputPod1,
+					Metrics: dltypes.NewMetrics(),
 				},
 				&schedulingtypes.PodMetrics{
-					PodInfo:      outputPod2,
-					MetricsState: backendmetrics.NewMetricsState(),
+					PodInfo: outputPod2,
+					Metrics: dltypes.NewMetrics(),
 				},
 			},
 		},
@@ -464,12 +464,12 @@ func TestGetCandidatePodsForScheduling(t *testing.T) {
 			metadata: map[string]any{"envoy.lb.subset_hint": map[string]any{}},
 			output: []schedulingtypes.Pod{
 				&schedulingtypes.PodMetrics{
-					PodInfo:      outputPod1,
-					MetricsState: backendmetrics.NewMetricsState(),
+					PodInfo: outputPod1,
+					Metrics: dltypes.NewMetrics(),
 				},
 				&schedulingtypes.PodMetrics{
-					PodInfo:      outputPod2,
-					MetricsState: backendmetrics.NewMetricsState(),
+					PodInfo: outputPod2,
+					Metrics: dltypes.NewMetrics(),
 				},
 			},
 		},
@@ -483,8 +483,8 @@ func TestGetCandidatePodsForScheduling(t *testing.T) {
 			metadata: makeFilterMetadata([]any{"10.0.0.1"}),
 			output: []schedulingtypes.Pod{
 				&schedulingtypes.PodMetrics{
-					PodInfo:      outputPod1,
-					MetricsState: backendmetrics.NewMetricsState(),
+					PodInfo: outputPod1,
+					Metrics: dltypes.NewMetrics(),
 				},
 			},
 		},
@@ -493,12 +493,12 @@ func TestGetCandidatePodsForScheduling(t *testing.T) {
 			metadata: makeFilterMetadata([]any{"10.0.0.1", "10.0.0.2", "10.0.0.3"}),
 			output: []schedulingtypes.Pod{
 				&schedulingtypes.PodMetrics{
-					PodInfo:      outputPod1,
-					MetricsState: backendmetrics.NewMetricsState(),
+					PodInfo: outputPod1,
+					Metrics: dltypes.NewMetrics(),
 				},
 				&schedulingtypes.PodMetrics{
-					PodInfo:      outputPod2,
-					MetricsState: backendmetrics.NewMetricsState(),
+					PodInfo: outputPod2,
+					Metrics: dltypes.NewMetrics(),
 				},
 			},
 		},

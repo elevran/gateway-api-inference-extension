@@ -22,11 +22,3 @@ import (
 
 // MetricsState holds the latest state of the metrics that were scraped from a pod.
 type MetricsState = types.Metrics
-
-// NewMetricsState initializes a new MetricsState and returns its pointer.
-func NewMetricsState() *MetricsState {
-	return &MetricsState{
-		ActiveModels:  make(map[string]int),
-		WaitingModels: make(map[string]int),
-	}
-}

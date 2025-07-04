@@ -37,6 +37,14 @@ type Metrics struct {
 	UpdateTime time.Time
 }
 
+// NewMetrics initializes a new Metrics and returns its pointer.
+func NewMetrics() *Metrics {
+	return &Metrics{
+		ActiveModels:  make(map[string]int),
+		WaitingModels: make(map[string]int),
+	}
+}
+
 // String returns a string with all Metric information
 func (m *Metrics) String() string {
 	if m == nil {

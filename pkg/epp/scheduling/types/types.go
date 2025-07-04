@@ -41,7 +41,7 @@ func (r *LLMRequest) String() string {
 
 type Pod interface {
 	GetPod() *dltypes.PodInfo
-	GetMetrics() *backendmetrics.MetricsState
+	GetMetrics() *dltypes.Metrics
 	String() string
 }
 
@@ -61,19 +61,19 @@ func (pm *PodMetrics) GetPod() *dltypes.PodInfo {
 	return pm.PodInfo
 }
 
-func (pm *PodMetrics) GetMetrics() *backendmetrics.MetricsState {
-	return pm.MetricsState
+func (pm *PodMetrics) GetMetrics() *dltypes.Metrics {
+	return pm.Metrics
 }
 
 type PodMetrics struct {
 	*dltypes.PodInfo
-	*backendmetrics.MetricsState
+	*dltypes.Metrics
 }
 
 func ToSchedulerPodMetrics(pods []backendmetrics.PodMetrics) []Pod {
 	pm := make([]Pod, 0, len(pods))
 	for _, pod := range pods {
-		pm = append(pm, &PodMetrics{PodInfo: pod.GetPod().Clone(), MetricsState: pod.GetMetrics().Clone()})
+		pm = append(pm, &PodMetrics{PodInfo: pod.GetPod().Clone(), Metrics: pod.GetMetrics().Clone()})
 	}
 	return pm
 }
