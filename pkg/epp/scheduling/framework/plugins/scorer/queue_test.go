@@ -22,7 +22,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/types"
 )
 
@@ -35,9 +35,9 @@ func TestQueueScorer(t *testing.T) {
 		{
 			name: "Different queue sizes",
 			pods: []types.Pod{
-				&types.PodMetrics{PodInfo: &dltypes.PodInfo{}, Metrics: &dltypes.Metrics{WaitingQueueSize: 10}},
-				&types.PodMetrics{PodInfo: &dltypes.PodInfo{}, Metrics: &dltypes.Metrics{WaitingQueueSize: 5}},
-				&types.PodMetrics{PodInfo: &dltypes.PodInfo{}, Metrics: &dltypes.Metrics{WaitingQueueSize: 0}},
+				&types.PodMetrics{PodInfo: &datalayer.PodInfo{}, Metrics: &datalayer.Metrics{WaitingQueueSize: 10}},
+				&types.PodMetrics{PodInfo: &datalayer.PodInfo{}, Metrics: &datalayer.Metrics{WaitingQueueSize: 5}},
+				&types.PodMetrics{PodInfo: &datalayer.PodInfo{}, Metrics: &datalayer.Metrics{WaitingQueueSize: 0}},
 			},
 			expectedScoresPod: map[int]float64{
 				0: 0.0, // Longest queue (10) gets lowest score
@@ -48,8 +48,8 @@ func TestQueueScorer(t *testing.T) {
 		{
 			name: "Same queue sizes",
 			pods: []types.Pod{
-				&types.PodMetrics{PodInfo: &dltypes.PodInfo{}, Metrics: &dltypes.Metrics{WaitingQueueSize: 5}},
-				&types.PodMetrics{PodInfo: &dltypes.PodInfo{}, Metrics: &dltypes.Metrics{WaitingQueueSize: 5}},
+				&types.PodMetrics{PodInfo: &datalayer.PodInfo{}, Metrics: &datalayer.Metrics{WaitingQueueSize: 5}},
+				&types.PodMetrics{PodInfo: &datalayer.PodInfo{}, Metrics: &datalayer.Metrics{WaitingQueueSize: 5}},
 			},
 			expectedScoresPod: map[int]float64{
 				0: 1.0, // When all pods have the same queue size, they get the same neutral score
@@ -59,8 +59,8 @@ func TestQueueScorer(t *testing.T) {
 		{
 			name: "Zero queue sizes",
 			pods: []types.Pod{
-				&types.PodMetrics{PodInfo: &dltypes.PodInfo{}, Metrics: &dltypes.Metrics{WaitingQueueSize: 0}},
-				&types.PodMetrics{PodInfo: &dltypes.PodInfo{}, Metrics: &dltypes.Metrics{WaitingQueueSize: 0}},
+				&types.PodMetrics{PodInfo: &datalayer.PodInfo{}, Metrics: &datalayer.Metrics{WaitingQueueSize: 0}},
+				&types.PodMetrics{PodInfo: &datalayer.PodInfo{}, Metrics: &datalayer.Metrics{WaitingQueueSize: 0}},
 			},
 			expectedScoresPod: map[int]float64{
 				0: 1.0,

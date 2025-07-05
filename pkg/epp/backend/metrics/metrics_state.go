@@ -17,8 +17,8 @@ limitations under the License.
 package metrics
 
 import (
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
 )
 
 // MetricsState holds the latest state of the metrics that were scraped from a pod.
-type MetricsState = types.Metrics
+type MetricsState = datalayer.Metrics

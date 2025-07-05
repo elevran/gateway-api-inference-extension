@@ -22,7 +22,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/types"
 )
 
@@ -35,9 +35,9 @@ func TestKvCacheScorer(t *testing.T) {
 		{
 			name: "Different KV cache utilization",
 			pods: []types.Pod{
-				&types.PodMetrics{PodInfo: &dltypes.PodInfo{}, Metrics: &dltypes.Metrics{KVCacheUsagePercent: 0.8}},
-				&types.PodMetrics{PodInfo: &dltypes.PodInfo{}, Metrics: &dltypes.Metrics{KVCacheUsagePercent: 0.5}},
-				&types.PodMetrics{PodInfo: &dltypes.PodInfo{}, Metrics: &dltypes.Metrics{KVCacheUsagePercent: 0.0}},
+				&types.PodMetrics{PodInfo: &datalayer.PodInfo{}, Metrics: &datalayer.Metrics{KVCacheUsagePercent: 0.8}},
+				&types.PodMetrics{PodInfo: &datalayer.PodInfo{}, Metrics: &datalayer.Metrics{KVCacheUsagePercent: 0.5}},
+				&types.PodMetrics{PodInfo: &datalayer.PodInfo{}, Metrics: &datalayer.Metrics{KVCacheUsagePercent: 0.0}},
 			},
 			expectedScoresPod: map[int]float64{
 				0: 0.2, // Highest KV cache usage (0.8) gets lowest score (1-0.8=0.2)
@@ -48,8 +48,8 @@ func TestKvCacheScorer(t *testing.T) {
 		{
 			name: "Same KV cache utilization",
 			pods: []types.Pod{
-				&types.PodMetrics{PodInfo: &dltypes.PodInfo{}, Metrics: &dltypes.Metrics{KVCacheUsagePercent: 0.6}},
-				&types.PodMetrics{PodInfo: &dltypes.PodInfo{}, Metrics: &dltypes.Metrics{KVCacheUsagePercent: 0.6}},
+				&types.PodMetrics{PodInfo: &datalayer.PodInfo{}, Metrics: &datalayer.Metrics{KVCacheUsagePercent: 0.6}},
+				&types.PodMetrics{PodInfo: &datalayer.PodInfo{}, Metrics: &datalayer.Metrics{KVCacheUsagePercent: 0.6}},
 			},
 			expectedScoresPod: map[int]float64{
 				0: 0.4, // Both get same score (1-0.6=0.4)
@@ -59,8 +59,8 @@ func TestKvCacheScorer(t *testing.T) {
 		{
 			name: "Zero KV cache utilization",
 			pods: []types.Pod{
-				&types.PodMetrics{PodInfo: &dltypes.PodInfo{}, Metrics: &dltypes.Metrics{KVCacheUsagePercent: 0.0}},
-				&types.PodMetrics{PodInfo: &dltypes.PodInfo{}, Metrics: &dltypes.Metrics{KVCacheUsagePercent: 0.0}},
+				&types.PodMetrics{PodInfo: &datalayer.PodInfo{}, Metrics: &datalayer.Metrics{KVCacheUsagePercent: 0.0}},
+				&types.PodMetrics{PodInfo: &datalayer.PodInfo{}, Metrics: &datalayer.Metrics{KVCacheUsagePercent: 0.0}},
 			},
 			expectedScoresPod: map[int]float64{
 				0: 1.0, // No KV cache usage gets highest score
@@ -70,8 +70,8 @@ func TestKvCacheScorer(t *testing.T) {
 		{
 			name: "Full KV cache utilization",
 			pods: []types.Pod{
-				&types.PodMetrics{PodInfo: &dltypes.PodInfo{}, Metrics: &dltypes.Metrics{KVCacheUsagePercent: 1.0}},
-				&types.PodMetrics{PodInfo: &dltypes.PodInfo{}, Metrics: &dltypes.Metrics{KVCacheUsagePercent: 0.5}},
+				&types.PodMetrics{PodInfo: &datalayer.PodInfo{}, Metrics: &datalayer.Metrics{KVCacheUsagePercent: 1.0}},
+				&types.PodMetrics{PodInfo: &datalayer.PodInfo{}, Metrics: &datalayer.Metrics{KVCacheUsagePercent: 0.5}},
 			},
 			expectedScoresPod: map[int]float64{
 				0: 0.0, // Full KV cache (1.0) gets lowest score (1-1=0)

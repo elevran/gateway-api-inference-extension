@@ -34,7 +34,7 @@ import (
 
 	"sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
-	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
 	testutil "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/util/testing"
 )
 
@@ -239,7 +239,7 @@ var (
 			Name: "pod1",
 		},
 	}
-	pod1Metrics = &dltypes.Metrics{
+	pod1Metrics = &datalayer.Metrics{
 		WaitingQueueSize:    0,
 		KVCacheUsagePercent: 0.2,
 		MaxActiveModels:     2,
@@ -254,7 +254,7 @@ var (
 			Name: "pod2",
 		},
 	}
-	pod2Metrics = &dltypes.Metrics{
+	pod2Metrics = &datalayer.Metrics{
 		WaitingQueueSize:    1,
 		KVCacheUsagePercent: 0.2,
 		MaxActiveModels:     2,
@@ -278,29 +278,29 @@ func TestMetrics(t *testing.T) {
 		name      string
 		pmc       backendmetrics.PodMetricsClient
 		storePods []*corev1.Pod
-		want      []*dltypes.Metrics
+		want      []*datalayer.Metrics
 	}{
 		{
 			name: "Probing metrics success",
 			pmc: &backendmetrics.FakePodMetricsClient{
-				Res: map[types.NamespacedName]*dltypes.Metrics{
+				Res: map[types.NamespacedName]*datalayer.Metrics{
 					pod1NamespacedName: pod1Metrics,
 					pod2NamespacedName: pod2Metrics,
 				},
 			},
 			storePods: []*corev1.Pod{pod1, pod2},
-			want:      []*dltypes.Metrics{pod1Metrics, pod2Metrics},
+			want:      []*datalayer.Metrics{pod1Metrics, pod2Metrics},
 		},
 		{
 			name: "Only pods in are probed",
 			pmc: &backendmetrics.FakePodMetricsClient{
-				Res: map[types.NamespacedName]*dltypes.Metrics{
+				Res: map[types.NamespacedName]*datalayer.Metrics{
 					pod1NamespacedName: pod1Metrics,
 					pod2NamespacedName: pod2Metrics,
 				},
 			},
 			storePods: []*corev1.Pod{pod1},
-			want:      []*dltypes.Metrics{pod1Metrics},
+			want:      []*datalayer.Metrics{pod1Metrics},
 		},
 		{
 			name: "Probing metrics error",
@@ -308,12 +308,12 @@ func TestMetrics(t *testing.T) {
 				Err: map[types.NamespacedName]error{
 					pod2NamespacedName: errors.New("injected error"),
 				},
-				Res: map[types.NamespacedName]*dltypes.Metrics{
+				Res: map[types.NamespacedName]*datalayer.Metrics{
 					pod1NamespacedName: pod1Metrics,
 				},
 			},
 			storePods: []*corev1.Pod{pod1, pod2},
-			want: []*dltypes.Metrics{
+			want: []*datalayer.Metrics{
 				pod1Metrics,
 				// Failed to fetch pod2 metrics so it remains the default values.
 				{
@@ -345,11 +345,11 @@ func TestMetrics(t *testing.T) {
 			}
 			assert.EventuallyWithT(t, func(t *assert.CollectT) {
 				got := ds.PodGetAll()
-				metrics := []*dltypes.Metrics{}
+				metrics := []*datalayer.Metrics{}
 				for _, one := range got {
 					metrics = append(metrics, one.GetMetrics())
 				}
-				diff := cmp.Diff(test.want, metrics, cmpopts.IgnoreFields(dltypes.Metrics{}, "UpdateTime"), cmpopts.SortSlices(func(a, b *dltypes.Metrics) bool {
+				diff := cmp.Diff(test.want, metrics, cmpopts.IgnoreFields(datalayer.Metrics{}, "UpdateTime"), cmpopts.SortSlices(func(a, b *datalayer.Metrics) bool {
 					return a.String() < b.String()
 				}))
 				assert.Equal(t, "", diff, "Unexpected diff (+got/-want)")

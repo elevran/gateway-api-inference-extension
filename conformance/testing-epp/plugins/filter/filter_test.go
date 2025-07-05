@@ -21,7 +21,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/framework"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/types"
 )
@@ -40,7 +40,7 @@ func TestFilter(t *testing.T) {
 			filter: &HeaderBasedTestingFilter{},
 			input: []types.Pod{
 				&types.PodMetrics{
-					PodInfo: &dltypes.PodInfo{
+					PodInfo: &datalayer.PodInfo{
 						Address: "test-endpoint",
 					},
 				},
@@ -53,7 +53,7 @@ func TestFilter(t *testing.T) {
 			filter: &HeaderBasedTestingFilter{},
 			input: []types.Pod{
 				&types.PodMetrics{
-					PodInfo: &dltypes.PodInfo{
+					PodInfo: &datalayer.PodInfo{
 						Address: "test-endpoint-unmatch",
 					},
 				},
@@ -66,14 +66,14 @@ func TestFilter(t *testing.T) {
 			filter: &HeaderBasedTestingFilter{},
 			input: []types.Pod{
 				&types.PodMetrics{
-					PodInfo: &dltypes.PodInfo{
+					PodInfo: &datalayer.PodInfo{
 						Address: "test-endpoint",
 					},
 				},
 			},
 			output: []types.Pod{
 				&types.PodMetrics{
-					PodInfo: &dltypes.PodInfo{
+					PodInfo: &datalayer.PodInfo{
 						Address: "test-endpoint",
 					},
 				},
@@ -85,29 +85,29 @@ func TestFilter(t *testing.T) {
 			filter: &HeaderBasedTestingFilter{},
 			input: []types.Pod{
 				&types.PodMetrics{
-					PodInfo: &dltypes.PodInfo{
+					PodInfo: &datalayer.PodInfo{
 						Address: "test-endpoint1",
 					},
 				},
 				&types.PodMetrics{
-					PodInfo: &dltypes.PodInfo{
+					PodInfo: &datalayer.PodInfo{
 						Address: "test-endpoint2",
 					},
 				},
 				&types.PodMetrics{
-					PodInfo: &dltypes.PodInfo{
+					PodInfo: &datalayer.PodInfo{
 						Address: "test-endpoint3",
 					},
 				},
 			},
 			output: []types.Pod{
 				&types.PodMetrics{
-					PodInfo: &dltypes.PodInfo{
+					PodInfo: &datalayer.PodInfo{
 						Address: "test-endpoint3",
 					},
 				},
 				&types.PodMetrics{
-					PodInfo: &dltypes.PodInfo{
+					PodInfo: &datalayer.PodInfo{
 						Address: "test-endpoint2",
 					},
 				},

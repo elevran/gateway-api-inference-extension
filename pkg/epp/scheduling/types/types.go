@@ -20,7 +20,7 @@ import (
 	"fmt"
 
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
-	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
 )
 
 // LLMRequest is a structured representation of the fields we parse out of the LLMRequest body.
@@ -40,8 +40,8 @@ func (r *LLMRequest) String() string {
 }
 
 type Pod interface {
-	GetPod() *dltypes.PodInfo
-	GetMetrics() *dltypes.Metrics
+	GetPod() *datalayer.PodInfo
+	GetMetrics() *datalayer.Metrics
 	String() string
 }
 
@@ -57,17 +57,17 @@ func (pm *PodMetrics) String() string {
 	return fmt.Sprintf("%+v", *pm)
 }
 
-func (pm *PodMetrics) GetPod() *dltypes.PodInfo {
+func (pm *PodMetrics) GetPod() *datalayer.PodInfo {
 	return pm.PodInfo
 }
 
-func (pm *PodMetrics) GetMetrics() *dltypes.Metrics {
+func (pm *PodMetrics) GetMetrics() *datalayer.Metrics {
 	return pm.Metrics
 }
 
 type PodMetrics struct {
-	*dltypes.PodInfo
-	*dltypes.Metrics
+	*datalayer.PodInfo
+	*datalayer.Metrics
 }
 
 func ToSchedulerPodMetrics(pods []backendmetrics.PodMetrics) []Pod {

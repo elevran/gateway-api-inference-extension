@@ -26,7 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend"
-	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
 )
 
 func NewPodMetricsFactory(pmc PodMetricsClient, refreshMetricsInterval time.Duration) *PodMetricsFactory {
@@ -53,7 +53,7 @@ func (f *PodMetricsFactory) NewPodMetrics(parentCtx context.Context, in *corev1.
 		logger:    log.FromContext(parentCtx).WithValues("pod", pod.NamespacedName),
 	}
 	pm.pod.Store(pod)
-	pm.metrics.Store(dltypes.NewMetrics())
+	pm.metrics.Store(datalayer.NewMetrics())
 
 	pm.startRefreshLoop(parentCtx)
 	return pm
