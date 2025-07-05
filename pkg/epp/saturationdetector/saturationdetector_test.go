@@ -26,32 +26,34 @@ import (
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/types"
+
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/mocks"
 )
 
 // --- Mock Implementations ---
-
 type mockDatastore struct {
-	pods []*backendmetrics.FakePodMetrics
+	pods []*mocks.Endpoint
 }
 
 // PodGetAll returns all pod metrics from the fake datastore.
-func (fds *mockDatastore) PodGetAll() []backendmetrics.PodMetrics {
-	pm := make([]backendmetrics.PodMetrics, 0, len(fds.pods))
-	for _, pod := range fds.pods {
-		pm = append(pm, pod)
+// @TODO change to return datalayer.Endpoint:
+// This is an adapter since Datastore expects backendmetrics.PodMetrics
+// and we are moving to datalayer types.
+func (mds *mockDatastore) PodGetAll() []backendmetrics.PodMetrics {
+	result := make([]backendmetrics.PodMetrics, len(mds.pods))
+	for i, ep := range mds.pods {
+		result[i] = ep
 	}
-	return pm
+	return result
 }
 
-func newMockPodMetrics(name string, metrics *datalayer.Metrics) *backendmetrics.FakePodMetrics {
-	return &backendmetrics.FakePodMetrics{
-		Pod: &datalayer.PodInfo{
-			NamespacedName: types.NamespacedName{Name: name, Namespace: "ns1"},
-		},
-		Metrics: metrics,
+func newMockEndpoint(name string, metrics *datalayer.Metrics) *mocks.Endpoint {
+	pod := &datalayer.PodInfo{
+		NamespacedName: types.NamespacedName{Name: name, Namespace: "ns1"},
 	}
+	return mocks.NewEndpoint(pod, metrics)
 }
 
 // --- Tests ---
@@ -138,179 +140,179 @@ func TestDetector_IsSaturated(t *testing.T) {
 	tests := []struct {
 		name            string
 		config          *Config
-		pods            []*backendmetrics.FakePodMetrics
-		expectedSaturat bool
+		pods            []*mocks.Endpoint
+		expectSaturated bool
 	}{
 		{
 			name:            "No pods in datastore",
 			config:          defaultConfig,
-			pods:            []*backendmetrics.FakePodMetrics{},
-			expectedSaturat: true, // No capacity = saturated
+			pods:            []*mocks.Endpoint{},
+			expectSaturated: true, // No capacity = saturated
 		},
 		{
 			name:   "Single pod with good capacity",
 			config: defaultConfig,
-			pods: []*backendmetrics.FakePodMetrics{
-				newMockPodMetrics("pod1", &datalayer.Metrics{
+			pods: []*mocks.Endpoint{
+				newMockEndpoint("pod1", &datalayer.Metrics{
 					UpdateTime:          baseTime,
 					WaitingQueueSize:    2,
 					KVCacheUsagePercent: 0.5,
 				}),
 			},
-			expectedSaturat: false,
+			expectSaturated: false,
 		},
 		{
 			name:   "Single pod with stale metrics",
 			config: defaultConfig,
-			pods: []*backendmetrics.FakePodMetrics{
-				newMockPodMetrics("pod1", &datalayer.Metrics{
+			pods: []*mocks.Endpoint{
+				newMockEndpoint("pod1", &datalayer.Metrics{
 					UpdateTime:          baseTime.Add(-200 * time.Millisecond), // Stale
 					WaitingQueueSize:    1,
 					KVCacheUsagePercent: 0.1,
 				}),
 			},
-			expectedSaturat: true,
+			expectSaturated: true,
 		},
 		{
 			name:   "Single pod with high queue depth",
 			config: defaultConfig,
-			pods: []*backendmetrics.FakePodMetrics{
-				newMockPodMetrics("pod1", &datalayer.Metrics{
+			pods: []*mocks.Endpoint{
+				newMockEndpoint("pod1", &datalayer.Metrics{
 					UpdateTime:          baseTime,
 					WaitingQueueSize:    10, // Exceeds threshold 5
 					KVCacheUsagePercent: 0.1,
 				}),
 			},
-			expectedSaturat: true,
+			expectSaturated: true,
 		},
 		{
 			name:   "Single pod with high KV cache utilization",
 			config: defaultConfig,
-			pods: []*backendmetrics.FakePodMetrics{
-				newMockPodMetrics("pod1", &datalayer.Metrics{
+			pods: []*mocks.Endpoint{
+				newMockEndpoint("pod1", &datalayer.Metrics{
 					UpdateTime:          baseTime,
 					WaitingQueueSize:    1,
 					KVCacheUsagePercent: 0.95, // Exceeds threshold 0.90
 				}),
 			},
-			expectedSaturat: true,
+			expectSaturated: true,
 		},
 		{
 			name:   "Single pod with nil metrics",
 			config: defaultConfig,
-			pods: []*backendmetrics.FakePodMetrics{
-				newMockPodMetrics("pod1", nil),
+			pods: []*mocks.Endpoint{
+				newMockEndpoint("pod1", nil),
 			},
-			expectedSaturat: true,
+			expectSaturated: true,
 		},
 		{
 			name:   "Multiple pods, all good capacity",
 			config: defaultConfig,
-			pods: []*backendmetrics.FakePodMetrics{
-				newMockPodMetrics("pod1", &datalayer.Metrics{
+			pods: []*mocks.Endpoint{
+				newMockEndpoint("pod1", &datalayer.Metrics{
 					UpdateTime:          baseTime,
 					WaitingQueueSize:    1,
 					KVCacheUsagePercent: 0.1,
 				}),
-				newMockPodMetrics("pod2", &datalayer.Metrics{
+				newMockEndpoint("pod2", &datalayer.Metrics{
 					UpdateTime:          baseTime.Add(-10 * time.Millisecond),
 					WaitingQueueSize:    0,
 					KVCacheUsagePercent: 0.2,
 				}),
 			},
-			expectedSaturat: false,
+			expectSaturated: false,
 		},
 		{
 			name:   "Multiple pods, one good, one bad (stale)",
 			config: defaultConfig,
-			pods: []*backendmetrics.FakePodMetrics{
-				newMockPodMetrics("pod1", &datalayer.Metrics{
+			pods: []*mocks.Endpoint{
+				newMockEndpoint("pod1", &datalayer.Metrics{
 					UpdateTime:          baseTime, // Good
 					WaitingQueueSize:    1,
 					KVCacheUsagePercent: 0.1,
 				}),
-				newMockPodMetrics("pod2", &datalayer.Metrics{
+				newMockEndpoint("pod2", &datalayer.Metrics{
 					UpdateTime:          baseTime.Add(-300 * time.Millisecond), // Stale
 					WaitingQueueSize:    0,
 					KVCacheUsagePercent: 0.2,
 				}),
 			},
-			expectedSaturat: false, // One good pod is enough
+			expectSaturated: false, // One good pod is enough
 		},
 		{
 			name:   "Multiple pods, one good, one bad (high queue)",
 			config: defaultConfig,
-			pods: []*backendmetrics.FakePodMetrics{
-				newMockPodMetrics("pod1", &datalayer.Metrics{
+			pods: []*mocks.Endpoint{
+				newMockEndpoint("pod1", &datalayer.Metrics{
 					UpdateTime:          baseTime,
 					WaitingQueueSize:    1,
 					KVCacheUsagePercent: 0.1,
 				}),
-				newMockPodMetrics("pod2", &datalayer.Metrics{
+				newMockEndpoint("pod2", &datalayer.Metrics{
 					UpdateTime:          baseTime,
 					WaitingQueueSize:    15, // Bad queue
 					KVCacheUsagePercent: 0.2,
 				}),
 			},
-			expectedSaturat: false,
+			expectSaturated: false,
 		},
 		{
 			name:   "Multiple pods, all bad capacity",
 			config: defaultConfig,
-			pods: []*backendmetrics.FakePodMetrics{
-				newMockPodMetrics("pod1", &datalayer.Metrics{
+			pods: []*mocks.Endpoint{
+				newMockEndpoint("pod1", &datalayer.Metrics{
 					UpdateTime:          baseTime.Add(-200 * time.Millisecond), // Stale
 					WaitingQueueSize:    1,
 					KVCacheUsagePercent: 0.1,
 				}),
-				newMockPodMetrics("pod2", &datalayer.Metrics{
+				newMockEndpoint("pod2", &datalayer.Metrics{
 					UpdateTime:          baseTime,
 					WaitingQueueSize:    20, // High queue
 					KVCacheUsagePercent: 0.2,
 				}),
-				newMockPodMetrics("pod3", &datalayer.Metrics{
+				newMockEndpoint("pod3", &datalayer.Metrics{
 					UpdateTime:          baseTime,
 					WaitingQueueSize:    1,
 					KVCacheUsagePercent: 0.99, // High KV
 				}),
 			},
-			expectedSaturat: true,
+			expectSaturated: true,
 		},
 		{
 			name:   "Queue depth exactly at threshold",
 			config: defaultConfig,
-			pods: []*backendmetrics.FakePodMetrics{
-				newMockPodMetrics("pod1", &datalayer.Metrics{
+			pods: []*mocks.Endpoint{
+				newMockEndpoint("pod1", &datalayer.Metrics{
 					UpdateTime:          baseTime,
 					WaitingQueueSize:    defaultConfig.QueueDepthThreshold, // Exactly at threshold (good)
 					KVCacheUsagePercent: 0.1,
 				}),
 			},
-			expectedSaturat: false,
+			expectSaturated: false,
 		},
 		{
 			name:   "KV cache exactly at threshold",
 			config: defaultConfig,
-			pods: []*backendmetrics.FakePodMetrics{
-				newMockPodMetrics("pod1", &datalayer.Metrics{
+			pods: []*mocks.Endpoint{
+				newMockEndpoint("pod1", &datalayer.Metrics{
 					UpdateTime:          baseTime,
 					WaitingQueueSize:    1,
 					KVCacheUsagePercent: defaultConfig.KVCacheUtilThreshold, // Exactly at threshold (good)
 				}),
 			},
-			expectedSaturat: false,
+			expectSaturated: false,
 		},
 		{
 			name:   "Metrics age just over staleness threshold",
 			config: defaultConfig,
-			pods: []*backendmetrics.FakePodMetrics{
-				newMockPodMetrics("pod1", &datalayer.Metrics{
+			pods: []*mocks.Endpoint{
+				newMockEndpoint("pod1", &datalayer.Metrics{
 					UpdateTime:          baseTime.Add(-defaultConfig.MetricsStalenessThreshold - time.Nanosecond), // Just over (stale)
 					WaitingQueueSize:    1,
 					KVCacheUsagePercent: 0.1,
 				}),
 			},
-			expectedSaturat: true,
+			expectSaturated: true,
 		},
 	}
 
@@ -318,8 +320,8 @@ func TestDetector_IsSaturated(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			detector := NewDetector(test.config, &mockDatastore{pods: test.pods}, logr.Discard())
 
-			if got := detector.IsSaturated(context.Background()); got != test.expectedSaturat {
-				t.Errorf("IsSaturated() = %v, want %v", got, test.expectedSaturat)
+			if got := detector.IsSaturated(context.Background()); got != test.expectSaturated {
+				t.Errorf("IsSaturated() = %v, want %v", got, test.expectSaturated)
 			}
 		})
 	}

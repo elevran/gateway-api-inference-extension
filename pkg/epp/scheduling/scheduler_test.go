@@ -25,6 +25,7 @@ import (
 	k8stypes "k8s.io/apimachinery/pkg/types"
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics" // Import config for thresholds
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/mocks"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/types"
 )
 
@@ -56,9 +57,8 @@ func TestSchedule(t *testing.T) {
 			// pod2 will be picked because it has relatively low queue size, with the requested
 			// model being active, and has low KV cache.
 			input: []backendmetrics.PodMetrics{
-				&backendmetrics.FakePodMetrics{
-					Pod: &datalayer.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod1"}},
-					Metrics: &datalayer.Metrics{
+				mocks.NewEndpoint(&datalayer.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod1"}},
+					&datalayer.Metrics{
 						WaitingQueueSize:    0,
 						KVCacheUsagePercent: 0.2,
 						MaxActiveModels:     2,
@@ -67,10 +67,9 @@ func TestSchedule(t *testing.T) {
 							"bar": 1,
 						},
 					},
-				},
-				&backendmetrics.FakePodMetrics{
-					Pod: &datalayer.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod2"}},
-					Metrics: &datalayer.Metrics{
+				),
+				mocks.NewEndpoint(&datalayer.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod2"}},
+					&datalayer.Metrics{
 						WaitingQueueSize:    3,
 						KVCacheUsagePercent: 0.1,
 						MaxActiveModels:     2,
@@ -79,10 +78,9 @@ func TestSchedule(t *testing.T) {
 							"critical": 1,
 						},
 					},
-				},
-				&backendmetrics.FakePodMetrics{
-					Pod: &datalayer.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod3"}},
-					Metrics: &datalayer.Metrics{
+				),
+				mocks.NewEndpoint(&datalayer.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod3"}},
+					&datalayer.Metrics{
 						WaitingQueueSize:    10,
 						KVCacheUsagePercent: 0.2,
 						MaxActiveModels:     2,
@@ -90,7 +88,7 @@ func TestSchedule(t *testing.T) {
 							"foo": 1,
 						},
 					},
-				},
+				),
 			},
 			wantRes: &types.SchedulingResult{
 				ProfileResults: map[string]*types.ProfileRunResult{

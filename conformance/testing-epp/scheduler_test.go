@@ -25,6 +25,7 @@ import (
 
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics" // Import config for thresholds
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/mocks"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/types"
 )
 
@@ -49,7 +50,7 @@ func TestSchedule(t *testing.T) {
 		{
 			name: "req header not set",
 			input: []backendmetrics.PodMetrics{
-				&backendmetrics.FakePodMetrics{Pod: &datalayer.PodInfo{Address: "random-endpoint"}},
+				mocks.NewEndpoint(&datalayer.PodInfo{Address: "random-endpoint"}, nil),
 			},
 			req: &types.LLMRequest{
 				Headers:   map[string]string{}, // Deliberately set an empty header.
@@ -61,7 +62,7 @@ func TestSchedule(t *testing.T) {
 		{
 			name: "no pods address from the candidate pods matches req header address",
 			input: []backendmetrics.PodMetrics{
-				&backendmetrics.FakePodMetrics{Pod: &datalayer.PodInfo{Address: "nonmatched-endpoint"}},
+				mocks.NewEndpoint(&datalayer.PodInfo{Address: "nonmatched-endpoint"}, nil),
 			},
 			req: &types.LLMRequest{
 				Headers:   map[string]string{"test-epp-endpoint-selection": "matched-endpoint"},
@@ -73,8 +74,8 @@ func TestSchedule(t *testing.T) {
 		{
 			name: "one pod address from the candidate pods matches req header address",
 			input: []backendmetrics.PodMetrics{
-				&backendmetrics.FakePodMetrics{Pod: &datalayer.PodInfo{Address: "nonmatched-endpoint"}},
-				&backendmetrics.FakePodMetrics{Pod: &datalayer.PodInfo{Address: "matched-endpoint"}},
+				mocks.NewEndpoint(&datalayer.PodInfo{Address: "nonmatched-endpoint"}, nil),
+				mocks.NewEndpoint(&datalayer.PodInfo{Address: "matched-endpoint"}, nil),
 			},
 			req: &types.LLMRequest{
 				Headers:   map[string]string{"test-epp-endpoint-selection": "matched-endpoint"},

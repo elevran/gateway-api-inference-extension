@@ -21,33 +21,16 @@ import (
 	"fmt"
 	"sync"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/mocks"
 	logutil "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/util/logging"
 )
 
 // FakePodMetrics is an implementation of PodMetrics that doesn't run the async refresh loop.
-type FakePodMetrics struct {
-	Pod     *backend.Pod
-	Metrics *MetricsState
-}
-
-func (fpm *FakePodMetrics) String() string {
-	return fmt.Sprintf("Pod: %v; Metrics: %v", fpm.GetPod(), fpm.GetMetrics())
-}
-
-func (fpm *FakePodMetrics) GetPod() *backend.Pod {
-	return fpm.Pod
-}
-func (fpm *FakePodMetrics) GetMetrics() *MetricsState {
-	return fpm.Metrics
-}
-func (fpm *FakePodMetrics) UpdatePod(pod *corev1.Pod) {
-	fpm.Pod = toInternalPod(pod)
-}
-func (fpm *FakePodMetrics) StopRefreshLoop() {} // noop
+type FakePodMetrics = mocks.Endpoint
 
 type FakePodMetricsClient struct {
 	errMu sync.RWMutex
