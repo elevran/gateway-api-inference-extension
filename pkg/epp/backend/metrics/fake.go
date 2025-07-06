@@ -17,53 +17,10 @@ limitations under the License.
 package metrics
 
 import (
-	"context"
-	"fmt"
-	"sync"
-
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/mocks"
-	logutil "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/util/logging"
 )
 
 // FakePodMetrics is an implementation of PodMetrics that doesn't run the async refresh loop.
 type FakePodMetrics = mocks.Endpoint
 
-type FakePodMetricsClient struct {
-	errMu sync.RWMutex
-	Err   map[types.NamespacedName]error
-	resMu sync.RWMutex
-	Res   map[types.NamespacedName]*MetricsState
-}
-
-func (f *FakePodMetricsClient) FetchMetrics(ctx context.Context, pod *backend.Pod, existing *MetricsState, port int32) (*MetricsState, error) {
-	f.errMu.RLock()
-	err, ok := f.Err[pod.NamespacedName]
-	f.errMu.RUnlock()
-	if ok {
-		return nil, err
-	}
-	f.resMu.RLock()
-	res, ok := f.Res[pod.NamespacedName]
-	f.resMu.RUnlock()
-	if !ok {
-		return nil, fmt.Errorf("no pod found: %v", pod.NamespacedName)
-	}
-	log.FromContext(ctx).V(logutil.VERBOSE).Info("Fetching metrics for pod", "existing", existing, "new", res)
-	return res.Clone(), nil
-}
-
-func (f *FakePodMetricsClient) SetRes(new map[types.NamespacedName]*MetricsState) {
-	f.resMu.Lock()
-	defer f.resMu.Unlock()
-	f.Res = new
-}
-
-func (f *FakePodMetricsClient) SetErr(new map[types.NamespacedName]error) {
-	f.errMu.Lock()
-	defer f.errMu.Unlock()
-	f.Err = new
-}
+type FakePodMetricsClient = mocks.MetricsClient

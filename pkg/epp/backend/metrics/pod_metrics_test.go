@@ -69,7 +69,7 @@ func TestMetricsRefresh(t *testing.T) {
 	namespacedName := types.NamespacedName{Name: pod1.Name, Namespace: pod1.Namespace}
 	// Use SetRes to simulate an update of metrics from the pod.
 	// Verify that the metrics are updated.
-	pmc.SetRes(map[types.NamespacedName]*MetricsState{namespacedName: initial})
+	pmc.SetResults(map[types.NamespacedName]*MetricsState{namespacedName: initial})
 	condition := func(collect *assert.CollectT) {
 		assert.True(collect, cmp.Equal(pm.GetMetrics(), initial, cmpopts.IgnoreFields(MetricsState{}, "UpdateTime")))
 	}
@@ -79,7 +79,7 @@ func TestMetricsRefresh(t *testing.T) {
 	// new update.
 	pm.StopRefreshLoop()
 	time.Sleep(pmf.refreshMetricsInterval * 2 /* small buffer for robustness */)
-	pmc.SetRes(map[types.NamespacedName]*MetricsState{namespacedName: updated})
+	pmc.SetResults(map[types.NamespacedName]*MetricsState{namespacedName: updated})
 	// Still expect the same condition (no metrics update).
 	assert.EventuallyWithT(t, condition, time.Second, time.Millisecond)
 }

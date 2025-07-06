@@ -868,7 +868,7 @@ func setUpHermeticServer(t *testing.T, podAndMetrics map[*datalayer.PodInfo]*dat
 	for pod, metrics := range podAndMetrics {
 		res[pod.NamespacedName] = metrics
 	}
-	serverRunner.TestPodMetricsClient.SetRes(res)
+	serverRunner.TestPodMetricsClient.SetResults(res)
 
 	serverCtx, stopServer := context.WithCancel(context.Background())
 

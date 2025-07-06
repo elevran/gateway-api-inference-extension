@@ -35,6 +35,7 @@ import (
 	"sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/mocks"
 	testutil "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/util/testing"
 )
 
@@ -282,36 +283,29 @@ func TestMetrics(t *testing.T) {
 	}{
 		{
 			name: "Probing metrics success",
-			pmc: &backendmetrics.FakePodMetricsClient{
-				Res: map[types.NamespacedName]*datalayer.Metrics{
-					pod1NamespacedName: pod1Metrics,
-					pod2NamespacedName: pod2Metrics,
-				},
-			},
+			pmc: mocks.NewMetricsClient(map[types.NamespacedName]*datalayer.Metrics{
+				pod1NamespacedName: pod1Metrics,
+				pod2NamespacedName: pod2Metrics,
+			}, map[types.NamespacedName]error{}),
 			storePods: []*corev1.Pod{pod1, pod2},
 			want:      []*datalayer.Metrics{pod1Metrics, pod2Metrics},
 		},
 		{
 			name: "Only pods in are probed",
-			pmc: &backendmetrics.FakePodMetricsClient{
-				Res: map[types.NamespacedName]*datalayer.Metrics{
-					pod1NamespacedName: pod1Metrics,
-					pod2NamespacedName: pod2Metrics,
-				},
-			},
+			pmc: mocks.NewMetricsClient(map[types.NamespacedName]*datalayer.Metrics{
+				pod1NamespacedName: pod1Metrics,
+				pod2NamespacedName: pod2Metrics,
+			}, map[types.NamespacedName]error{}),
 			storePods: []*corev1.Pod{pod1},
 			want:      []*datalayer.Metrics{pod1Metrics},
 		},
 		{
 			name: "Probing metrics error",
-			pmc: &backendmetrics.FakePodMetricsClient{
-				Err: map[types.NamespacedName]error{
-					pod2NamespacedName: errors.New("injected error"),
-				},
-				Res: map[types.NamespacedName]*datalayer.Metrics{
-					pod1NamespacedName: pod1Metrics,
-				},
-			},
+			pmc: mocks.NewMetricsClient(map[types.NamespacedName]*datalayer.Metrics{
+				pod1NamespacedName: pod1Metrics,
+			}, map[types.NamespacedName]error{
+				pod2NamespacedName: errors.New("injected error"),
+			}),
 			storePods: []*corev1.Pod{pod1, pod2},
 			want: []*datalayer.Metrics{
 				pod1Metrics,
