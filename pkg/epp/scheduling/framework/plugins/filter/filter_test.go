@@ -26,7 +26,7 @@ import (
 	"github.com/google/uuid"
 	k8stypes "k8s.io/apimachinery/pkg/types"
 
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
+	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/plugins"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/config"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/framework"
@@ -80,29 +80,29 @@ func TestFilter(t *testing.T) {
 			filter: NewLeastQueueFilter(),
 			input: []types.Pod{
 				&types.PodMetrics{
-					Metrics: &datalayer.Metrics{
+					Metrics: &dltypes.Metrics{
 						WaitingQueueSize: 0,
 					},
 				},
 				&types.PodMetrics{
-					Metrics: &datalayer.Metrics{
+					Metrics: &dltypes.Metrics{
 						WaitingQueueSize: 3,
 					},
 				},
 				&types.PodMetrics{
-					Metrics: &datalayer.Metrics{
+					Metrics: &dltypes.Metrics{
 						WaitingQueueSize: 10,
 					},
 				},
 			},
 			output: []types.Pod{
 				&types.PodMetrics{
-					Metrics: &datalayer.Metrics{
+					Metrics: &dltypes.Metrics{
 						WaitingQueueSize: 0,
 					},
 				},
 				&types.PodMetrics{
-					Metrics: &datalayer.Metrics{
+					Metrics: &dltypes.Metrics{
 						WaitingQueueSize: 3,
 					},
 				},
@@ -119,29 +119,29 @@ func TestFilter(t *testing.T) {
 			filter: NewLeastKVCacheFilter(),
 			input: []types.Pod{
 				&types.PodMetrics{
-					Metrics: &datalayer.Metrics{
+					Metrics: &dltypes.Metrics{
 						KVCacheUsagePercent: 0,
 					},
 				},
 				&types.PodMetrics{
-					Metrics: &datalayer.Metrics{
+					Metrics: &dltypes.Metrics{
 						KVCacheUsagePercent: 0.3,
 					},
 				},
 				&types.PodMetrics{
-					Metrics: &datalayer.Metrics{
+					Metrics: &dltypes.Metrics{
 						KVCacheUsagePercent: 1.0,
 					},
 				},
 			},
 			output: []types.Pod{
 				&types.PodMetrics{
-					Metrics: &datalayer.Metrics{
+					Metrics: &dltypes.Metrics{
 						KVCacheUsagePercent: 0,
 					},
 				},
 				&types.PodMetrics{
-					Metrics: &datalayer.Metrics{
+					Metrics: &dltypes.Metrics{
 						KVCacheUsagePercent: 0.3,
 					},
 				},
@@ -191,8 +191,8 @@ func TestLoRASoftAffinityDistribution(t *testing.T) {
 	// Test setup: One affinity pod and one available pod
 	pods := []types.Pod{
 		&types.PodMetrics{
-			PodInfo: &datalayer.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "affinity-pod"}},
-			Metrics: &datalayer.Metrics{
+			PodInfo: &dltypes.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "affinity-pod"}},
+			Metrics: &dltypes.Metrics{
 				MaxActiveModels: 2,
 				ActiveModels: map[string]int{
 					testAffinityModel: 1,
@@ -200,8 +200,8 @@ func TestLoRASoftAffinityDistribution(t *testing.T) {
 			},
 		},
 		&types.PodMetrics{
-			PodInfo: &datalayer.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "available-pod"}},
-			Metrics: &datalayer.Metrics{
+			PodInfo: &dltypes.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "available-pod"}},
+			Metrics: &dltypes.Metrics{
 				MaxActiveModels: 2,
 				ActiveModels:    map[string]int{},
 			},

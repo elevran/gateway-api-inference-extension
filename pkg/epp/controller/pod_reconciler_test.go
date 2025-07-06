@@ -33,6 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/mocks"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datastore"
 	utiltest "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/util/testing"
 )
@@ -42,7 +43,7 @@ var (
 	basePod2  = &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "pod2"}, Status: corev1.PodStatus{PodIP: "address-2"}}
 	basePod3  = &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "pod3"}, Status: corev1.PodStatus{PodIP: "address-3"}}
 	basePod11 = &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "pod1"}, Status: corev1.PodStatus{PodIP: "address-11"}}
-	pmc       = &backendmetrics.FakePodMetricsClient{}
+	pmc       = mocks.NewMetricsClient(nil, nil)
 	pmf       = backendmetrics.NewPodMetricsFactory(pmc, time.Second)
 )
 

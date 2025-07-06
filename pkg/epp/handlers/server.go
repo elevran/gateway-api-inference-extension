@@ -31,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
+	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/metrics"
 	schedulingtypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/types"
 	errutil "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/util/error"
@@ -56,7 +56,7 @@ func NewStreamingServer(destinationEndpointHintMetadataNamespace, destinationEnd
 type Director interface {
 	HandleRequest(ctx context.Context, reqCtx *RequestContext) (*RequestContext, error)
 	HandleResponse(ctx context.Context, reqCtx *RequestContext) (*RequestContext, error)
-	GetRandomPod() *datalayer.PodInfo
+	GetRandomPod() *dltypes.PodInfo
 }
 
 type Datastore interface {
@@ -81,7 +81,7 @@ type StreamingServer struct {
 // Specifically, there are fields related to the ext-proc protocol, and then fields related to the lifecycle of the request.
 // We should split these apart as this monolithic object exposes too much data to too many layers.
 type RequestContext struct {
-	TargetPod                 *datalayer.PodInfo
+	TargetPod                 *dltypes.PodInfo
 	TargetEndpoint            string
 	Model                     string
 	ResolvedTargetModel       string

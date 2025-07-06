@@ -24,8 +24,8 @@ import (
 	"github.com/google/uuid"
 	k8stypes "k8s.io/apimachinery/pkg/types"
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics" // Import config for thresholds
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/mocks"
+	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/types"
 )
 
@@ -57,8 +57,8 @@ func TestSchedule(t *testing.T) {
 			// pod2 will be picked because it has relatively low queue size, with the requested
 			// model being active, and has low KV cache.
 			input: []backendmetrics.PodMetrics{
-				mocks.NewEndpoint(&datalayer.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod1"}},
-					&datalayer.Metrics{
+				mocks.NewEndpoint(&dltypes.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod1"}},
+					&dltypes.Metrics{
 						WaitingQueueSize:    0,
 						KVCacheUsagePercent: 0.2,
 						MaxActiveModels:     2,
@@ -68,8 +68,8 @@ func TestSchedule(t *testing.T) {
 						},
 					},
 				),
-				mocks.NewEndpoint(&datalayer.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod2"}},
-					&datalayer.Metrics{
+				mocks.NewEndpoint(&dltypes.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod2"}},
+					&dltypes.Metrics{
 						WaitingQueueSize:    3,
 						KVCacheUsagePercent: 0.1,
 						MaxActiveModels:     2,
@@ -79,8 +79,8 @@ func TestSchedule(t *testing.T) {
 						},
 					},
 				),
-				mocks.NewEndpoint(&datalayer.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod3"}},
-					&datalayer.Metrics{
+				mocks.NewEndpoint(&dltypes.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod3"}},
+					&dltypes.Metrics{
 						WaitingQueueSize:    10,
 						KVCacheUsagePercent: 0.2,
 						MaxActiveModels:     2,
@@ -95,8 +95,8 @@ func TestSchedule(t *testing.T) {
 					"default": {
 						TargetPod: &types.ScoredPod{
 							Pod: &types.PodMetrics{
-								PodInfo: &datalayer.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod2"}, Labels: make(map[string]string)},
-								Metrics: &datalayer.Metrics{
+								PodInfo: &dltypes.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod2"}, Labels: make(map[string]string)},
+								Metrics: &dltypes.Metrics{
 									WaitingQueueSize:    3,
 									KVCacheUsagePercent: 0.1,
 									MaxActiveModels:     2,

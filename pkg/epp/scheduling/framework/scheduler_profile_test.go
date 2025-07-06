@@ -25,8 +25,8 @@ import (
 	k8stypes "k8s.io/apimachinery/pkg/types"
 
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics" // Import config for thresholds
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/mocks"
+	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/plugins"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/types"
 )
@@ -61,9 +61,9 @@ func TestSchedulePlugins(t *testing.T) {
 				WithPicker(pickerPlugin).
 				WithPostCyclePlugins(tp1, tp2),
 			input: []backendmetrics.PodMetrics{
-				mocks.NewEndpoint(&datalayer.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod1"}}, nil),
-				mocks.NewEndpoint(&datalayer.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod2"}}, nil),
-				mocks.NewEndpoint(&datalayer.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod3"}}, nil),
+				mocks.NewEndpoint(&dltypes.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod1"}}, nil),
+				mocks.NewEndpoint(&dltypes.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod2"}}, nil),
+				mocks.NewEndpoint(&dltypes.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod3"}}, nil),
 			},
 			wantTargetPod:  k8stypes.NamespacedName{Name: "pod1"},
 			targetPodScore: 1.1,
@@ -78,9 +78,9 @@ func TestSchedulePlugins(t *testing.T) {
 				WithPicker(pickerPlugin).
 				WithPostCyclePlugins(tp1, tp2),
 			input: []backendmetrics.PodMetrics{
-				mocks.NewEndpoint(&datalayer.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod1"}}, nil),
-				mocks.NewEndpoint(&datalayer.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod2"}}, nil),
-				mocks.NewEndpoint(&datalayer.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod3"}}, nil),
+				mocks.NewEndpoint(&dltypes.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod1"}}, nil),
+				mocks.NewEndpoint(&dltypes.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod2"}}, nil),
+				mocks.NewEndpoint(&dltypes.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod3"}}, nil),
 			},
 			wantTargetPod:  k8stypes.NamespacedName{Name: "pod1"},
 			targetPodScore: 50,
@@ -95,9 +95,9 @@ func TestSchedulePlugins(t *testing.T) {
 				WithPicker(pickerPlugin).
 				WithPostCyclePlugins(tp1, tp2),
 			input: []backendmetrics.PodMetrics{
-				mocks.NewEndpoint(&datalayer.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod1"}}, nil),
-				mocks.NewEndpoint(&datalayer.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod2"}}, nil),
-				mocks.NewEndpoint(&datalayer.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod3"}}, nil),
+				mocks.NewEndpoint(&dltypes.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod1"}}, nil),
+				mocks.NewEndpoint(&dltypes.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod2"}}, nil),
+				mocks.NewEndpoint(&dltypes.PodInfo{NamespacedName: k8stypes.NamespacedName{Name: "pod3"}}, nil),
 			},
 			numPodsToScore: 0,
 			err:            true, // no available pods to server after filter all
@@ -137,7 +137,7 @@ func TestSchedulePlugins(t *testing.T) {
 
 			// Validate output
 			wantPod := &types.PodMetrics{
-				PodInfo: &datalayer.PodInfo{NamespacedName: test.wantTargetPod, Labels: make(map[string]string)},
+				PodInfo: &dltypes.PodInfo{NamespacedName: test.wantTargetPod, Labels: make(map[string]string)},
 			}
 			wantRes := &types.ProfileRunResult{
 				TargetPod: wantPod,

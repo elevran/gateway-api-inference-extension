@@ -28,8 +28,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/mocks"
+	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
 )
 
 // --- Mock Implementations ---
@@ -49,8 +49,8 @@ func (mds *mockDatastore) PodGetAll() []backendmetrics.PodMetrics {
 	return result
 }
 
-func newMockEndpoint(name string, metrics *datalayer.Metrics) *mocks.Endpoint {
-	pod := &datalayer.PodInfo{
+func newMockEndpoint(name string, metrics *dltypes.Metrics) *mocks.Endpoint {
+	pod := &dltypes.PodInfo{
 		NamespacedName: types.NamespacedName{Name: name, Namespace: "ns1"},
 	}
 	return mocks.NewEndpoint(pod, metrics)
@@ -153,7 +153,7 @@ func TestDetector_IsSaturated(t *testing.T) {
 			name:   "Single pod with good capacity",
 			config: defaultConfig,
 			pods: []*mocks.Endpoint{
-				newMockEndpoint("pod1", &datalayer.Metrics{
+				newMockEndpoint("pod1", &dltypes.Metrics{
 					UpdateTime:          baseTime,
 					WaitingQueueSize:    2,
 					KVCacheUsagePercent: 0.5,
@@ -165,7 +165,7 @@ func TestDetector_IsSaturated(t *testing.T) {
 			name:   "Single pod with stale metrics",
 			config: defaultConfig,
 			pods: []*mocks.Endpoint{
-				newMockEndpoint("pod1", &datalayer.Metrics{
+				newMockEndpoint("pod1", &dltypes.Metrics{
 					UpdateTime:          baseTime.Add(-200 * time.Millisecond), // Stale
 					WaitingQueueSize:    1,
 					KVCacheUsagePercent: 0.1,
@@ -177,7 +177,7 @@ func TestDetector_IsSaturated(t *testing.T) {
 			name:   "Single pod with high queue depth",
 			config: defaultConfig,
 			pods: []*mocks.Endpoint{
-				newMockEndpoint("pod1", &datalayer.Metrics{
+				newMockEndpoint("pod1", &dltypes.Metrics{
 					UpdateTime:          baseTime,
 					WaitingQueueSize:    10, // Exceeds threshold 5
 					KVCacheUsagePercent: 0.1,
@@ -189,7 +189,7 @@ func TestDetector_IsSaturated(t *testing.T) {
 			name:   "Single pod with high KV cache utilization",
 			config: defaultConfig,
 			pods: []*mocks.Endpoint{
-				newMockEndpoint("pod1", &datalayer.Metrics{
+				newMockEndpoint("pod1", &dltypes.Metrics{
 					UpdateTime:          baseTime,
 					WaitingQueueSize:    1,
 					KVCacheUsagePercent: 0.95, // Exceeds threshold 0.90
@@ -209,12 +209,12 @@ func TestDetector_IsSaturated(t *testing.T) {
 			name:   "Multiple pods, all good capacity",
 			config: defaultConfig,
 			pods: []*mocks.Endpoint{
-				newMockEndpoint("pod1", &datalayer.Metrics{
+				newMockEndpoint("pod1", &dltypes.Metrics{
 					UpdateTime:          baseTime,
 					WaitingQueueSize:    1,
 					KVCacheUsagePercent: 0.1,
 				}),
-				newMockEndpoint("pod2", &datalayer.Metrics{
+				newMockEndpoint("pod2", &dltypes.Metrics{
 					UpdateTime:          baseTime.Add(-10 * time.Millisecond),
 					WaitingQueueSize:    0,
 					KVCacheUsagePercent: 0.2,
@@ -226,12 +226,12 @@ func TestDetector_IsSaturated(t *testing.T) {
 			name:   "Multiple pods, one good, one bad (stale)",
 			config: defaultConfig,
 			pods: []*mocks.Endpoint{
-				newMockEndpoint("pod1", &datalayer.Metrics{
+				newMockEndpoint("pod1", &dltypes.Metrics{
 					UpdateTime:          baseTime, // Good
 					WaitingQueueSize:    1,
 					KVCacheUsagePercent: 0.1,
 				}),
-				newMockEndpoint("pod2", &datalayer.Metrics{
+				newMockEndpoint("pod2", &dltypes.Metrics{
 					UpdateTime:          baseTime.Add(-300 * time.Millisecond), // Stale
 					WaitingQueueSize:    0,
 					KVCacheUsagePercent: 0.2,
@@ -243,12 +243,12 @@ func TestDetector_IsSaturated(t *testing.T) {
 			name:   "Multiple pods, one good, one bad (high queue)",
 			config: defaultConfig,
 			pods: []*mocks.Endpoint{
-				newMockEndpoint("pod1", &datalayer.Metrics{
+				newMockEndpoint("pod1", &dltypes.Metrics{
 					UpdateTime:          baseTime,
 					WaitingQueueSize:    1,
 					KVCacheUsagePercent: 0.1,
 				}),
-				newMockEndpoint("pod2", &datalayer.Metrics{
+				newMockEndpoint("pod2", &dltypes.Metrics{
 					UpdateTime:          baseTime,
 					WaitingQueueSize:    15, // Bad queue
 					KVCacheUsagePercent: 0.2,
@@ -260,17 +260,17 @@ func TestDetector_IsSaturated(t *testing.T) {
 			name:   "Multiple pods, all bad capacity",
 			config: defaultConfig,
 			pods: []*mocks.Endpoint{
-				newMockEndpoint("pod1", &datalayer.Metrics{
+				newMockEndpoint("pod1", &dltypes.Metrics{
 					UpdateTime:          baseTime.Add(-200 * time.Millisecond), // Stale
 					WaitingQueueSize:    1,
 					KVCacheUsagePercent: 0.1,
 				}),
-				newMockEndpoint("pod2", &datalayer.Metrics{
+				newMockEndpoint("pod2", &dltypes.Metrics{
 					UpdateTime:          baseTime,
 					WaitingQueueSize:    20, // High queue
 					KVCacheUsagePercent: 0.2,
 				}),
-				newMockEndpoint("pod3", &datalayer.Metrics{
+				newMockEndpoint("pod3", &dltypes.Metrics{
 					UpdateTime:          baseTime,
 					WaitingQueueSize:    1,
 					KVCacheUsagePercent: 0.99, // High KV
@@ -282,7 +282,7 @@ func TestDetector_IsSaturated(t *testing.T) {
 			name:   "Queue depth exactly at threshold",
 			config: defaultConfig,
 			pods: []*mocks.Endpoint{
-				newMockEndpoint("pod1", &datalayer.Metrics{
+				newMockEndpoint("pod1", &dltypes.Metrics{
 					UpdateTime:          baseTime,
 					WaitingQueueSize:    defaultConfig.QueueDepthThreshold, // Exactly at threshold (good)
 					KVCacheUsagePercent: 0.1,
@@ -294,7 +294,7 @@ func TestDetector_IsSaturated(t *testing.T) {
 			name:   "KV cache exactly at threshold",
 			config: defaultConfig,
 			pods: []*mocks.Endpoint{
-				newMockEndpoint("pod1", &datalayer.Metrics{
+				newMockEndpoint("pod1", &dltypes.Metrics{
 					UpdateTime:          baseTime,
 					WaitingQueueSize:    1,
 					KVCacheUsagePercent: defaultConfig.KVCacheUtilThreshold, // Exactly at threshold (good)
@@ -306,7 +306,7 @@ func TestDetector_IsSaturated(t *testing.T) {
 			name:   "Metrics age just over staleness threshold",
 			config: defaultConfig,
 			pods: []*mocks.Endpoint{
-				newMockEndpoint("pod1", &datalayer.Metrics{
+				newMockEndpoint("pod1", &dltypes.Metrics{
 					UpdateTime:          baseTime.Add(-defaultConfig.MetricsStalenessThreshold - time.Nanosecond), // Just over (stale)
 					WaitingQueueSize:    1,
 					KVCacheUsagePercent: 0.1,

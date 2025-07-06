@@ -24,8 +24,8 @@ import (
 	"github.com/google/uuid"
 
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics" // Import config for thresholds
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/mocks"
+	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/types"
 )
 
@@ -50,7 +50,7 @@ func TestSchedule(t *testing.T) {
 		{
 			name: "req header not set",
 			input: []backendmetrics.PodMetrics{
-				mocks.NewEndpoint(&datalayer.PodInfo{Address: "random-endpoint"}, nil),
+				mocks.NewEndpoint(&dltypes.PodInfo{Address: "random-endpoint"}, nil),
 			},
 			req: &types.LLMRequest{
 				Headers:   map[string]string{}, // Deliberately set an empty header.
@@ -62,7 +62,7 @@ func TestSchedule(t *testing.T) {
 		{
 			name: "no pods address from the candidate pods matches req header address",
 			input: []backendmetrics.PodMetrics{
-				mocks.NewEndpoint(&datalayer.PodInfo{Address: "nonmatched-endpoint"}, nil),
+				mocks.NewEndpoint(&dltypes.PodInfo{Address: "nonmatched-endpoint"}, nil),
 			},
 			req: &types.LLMRequest{
 				Headers:   map[string]string{"test-epp-endpoint-selection": "matched-endpoint"},
@@ -74,8 +74,8 @@ func TestSchedule(t *testing.T) {
 		{
 			name: "one pod address from the candidate pods matches req header address",
 			input: []backendmetrics.PodMetrics{
-				mocks.NewEndpoint(&datalayer.PodInfo{Address: "nonmatched-endpoint"}, nil),
-				mocks.NewEndpoint(&datalayer.PodInfo{Address: "matched-endpoint"}, nil),
+				mocks.NewEndpoint(&dltypes.PodInfo{Address: "nonmatched-endpoint"}, nil),
+				mocks.NewEndpoint(&dltypes.PodInfo{Address: "matched-endpoint"}, nil),
 			},
 			req: &types.LLMRequest{
 				Headers:   map[string]string{"test-epp-endpoint-selection": "matched-endpoint"},
@@ -86,7 +86,7 @@ func TestSchedule(t *testing.T) {
 					"req-header-based-profile": {
 						TargetPod: &types.ScoredPod{
 							Pod: &types.PodMetrics{
-								PodInfo: &datalayer.PodInfo{
+								PodInfo: &dltypes.PodInfo{
 									Address: "matched-endpoint",
 									Labels:  map[string]string{},
 								},

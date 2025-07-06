@@ -31,8 +31,8 @@ import (
 
 	"sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/mocks"
+	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datastore"
 )
 
@@ -43,7 +43,7 @@ var (
 		},
 	}
 	pod1NamespacedName = types.NamespacedName{Name: pod1.Name, Namespace: pod1.Namespace}
-	pod1Metrics        = &datalayer.Metrics{
+	pod1Metrics        = &dltypes.Metrics{
 		WaitingQueueSize:    100,
 		KVCacheUsagePercent: 0.2,
 		MaxActiveModels:     2,
@@ -51,7 +51,7 @@ var (
 )
 
 func TestNoMetricsCollected(t *testing.T) {
-	pmf := backendmetrics.NewPodMetricsFactory(&backendmetrics.FakePodMetricsClient{}, time.Second)
+	pmf := backendmetrics.NewPodMetricsFactory(mocks.NewMetricsClient(nil, nil), time.Second)
 	datastore := datastore.NewDatastore(context.Background(), pmf)
 
 	collector := &inferencePoolMetricsCollector{
@@ -64,7 +64,7 @@ func TestNoMetricsCollected(t *testing.T) {
 }
 
 func TestMetricsCollected(t *testing.T) {
-	pmc := mocks.NewMetricsClient(map[types.NamespacedName]*datalayer.Metrics{
+	pmc := mocks.NewMetricsClient(map[types.NamespacedName]*dltypes.Metrics{
 		pod1NamespacedName: pod1Metrics,
 	}, map[types.NamespacedName]error{})
 	pmf := backendmetrics.NewPodMetricsFactory(pmc, time.Millisecond)

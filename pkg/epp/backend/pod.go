@@ -16,6 +16,8 @@ limitations under the License.
 
 package backend
 
-import "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
+import (
+	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
+)
 
-type Pod = datalayer.PodInfo
+type Pod = dltypes.PodInfo

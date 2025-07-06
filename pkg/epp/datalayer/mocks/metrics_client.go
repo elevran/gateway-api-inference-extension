@@ -24,7 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
+	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
 	logutil "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/util/logging"
 )
 
@@ -32,12 +32,12 @@ import (
 type MetricsClient struct {
 	mu        sync.RWMutex
 	errmap    map[string]error
-	resultmap map[string]*datalayer.Metrics
+	resultmap map[string]*dltypes.Metrics
 }
 
 // NewMetricsClient returns a new mock metrics client initialized with the given
 // results and/or errors.
-func NewMetricsClient(results map[types.NamespacedName]*datalayer.Metrics, errmap map[types.NamespacedName]error) *MetricsClient {
+func NewMetricsClient(results map[types.NamespacedName]*dltypes.Metrics, errmap map[types.NamespacedName]error) *MetricsClient {
 	client := &MetricsClient{}
 	client.SetResults(results)
 	client.SetErrors(errmap)
@@ -46,7 +46,7 @@ func NewMetricsClient(results map[types.NamespacedName]*datalayer.Metrics, errma
 
 // FetchMetrics returns the metrics (or error) associated with eth endpoint by looking
 // up its keys in the results and errors maps.
-func (cl *MetricsClient) FetchMetrics(ctx context.Context, ep datalayer.Addressable, last *datalayer.Metrics, _ int32) (*datalayer.Metrics, error) {
+func (cl *MetricsClient) FetchMetrics(ctx context.Context, ep dltypes.Addressable, last *dltypes.Metrics, _ int32) (*dltypes.Metrics, error) {
 	cl.mu.RLock()
 	defer cl.mu.RUnlock()
 
@@ -65,11 +65,11 @@ func (cl *MetricsClient) FetchMetrics(ctx context.Context, ep datalayer.Addressa
 }
 
 // SetResults sets the available results per endpoint.
-func (cl *MetricsClient) SetResults(resultmap map[types.NamespacedName]*datalayer.Metrics) {
+func (cl *MetricsClient) SetResults(resultmap map[types.NamespacedName]*dltypes.Metrics) {
 	cl.mu.Lock()
 	defer cl.mu.Unlock()
 
-	cl.resultmap = make(map[string]*datalayer.Metrics, len(resultmap))
+	cl.resultmap = make(map[string]*dltypes.Metrics, len(resultmap))
 
 	for nsn, metric := range resultmap {
 		cl.resultmap[nsn.String()] = metric

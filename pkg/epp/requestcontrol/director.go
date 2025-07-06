@@ -32,7 +32,7 @@ import (
 
 	"sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
+	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datastore"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/handlers"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/metrics"
@@ -269,7 +269,7 @@ func (d *Director) HandleResponse(ctx context.Context, reqCtx *handlers.RequestC
 	return reqCtx, nil
 }
 
-func (d *Director) GetRandomPod() *datalayer.PodInfo {
+func (d *Director) GetRandomPod() *dltypes.PodInfo {
 	pods := d.datastore.PodGetAll()
 	if len(pods) == 0 {
 		return nil
@@ -320,7 +320,7 @@ func (d *Director) runPreRequestPlugins(ctx context.Context, request *scheduling
 	}
 }
 
-func (d *Director) runPostResponsePlugins(ctx context.Context, request *schedulingtypes.LLMRequest, response *Response, targetPod *datalayer.PodInfo) {
+func (d *Director) runPostResponsePlugins(ctx context.Context, request *schedulingtypes.LLMRequest, response *Response, targetPod *dltypes.PodInfo) {
 	for _, plugin := range d.postResponsePlugins {
 		log.FromContext(ctx).V(logutil.DEBUG).Info("Running post-response plugin", "plugin", plugin.TypedName().Type)
 		before := time.Now()

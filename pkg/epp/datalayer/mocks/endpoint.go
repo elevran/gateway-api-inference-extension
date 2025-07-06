@@ -22,20 +22,20 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
+	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
 )
 
 type Endpoint struct {
-	Pod     atomic.Pointer[datalayer.PodInfo]
-	Metrics atomic.Pointer[datalayer.Metrics]
-	attr    datalayer.Attributes
+	Pod     atomic.Pointer[dltypes.PodInfo]
+	Metrics atomic.Pointer[dltypes.Metrics]
+	attr    dltypes.Attributes
 }
 
 // NewEndpoint returns a new mock Endpoint instance initialed with the
 // provided PodInfo and Metrics.
-func NewEndpoint(pod *datalayer.PodInfo, metrics *datalayer.Metrics) *Endpoint {
+func NewEndpoint(pod *dltypes.PodInfo, metrics *dltypes.Metrics) *Endpoint {
 	ep := &Endpoint{
-		attr: *datalayer.NewAttributes(),
+		attr: *dltypes.NewAttributes(),
 	}
 	ep.Pod.Store(pod) // optionally create a corev1.Pod object and call UpdatePod?
 	ep.Metrics.Store(metrics)
@@ -48,27 +48,27 @@ func (ep *Endpoint) String() string {
 }
 
 // GetPod returns the PodInfo of the endpoint.
-func (ep *Endpoint) GetPod() *datalayer.PodInfo {
+func (ep *Endpoint) GetPod() *dltypes.PodInfo {
 	return ep.Pod.Load()
 }
 
 // UpdatePod sets the PodInfo field of the endpoint
 func (ep *Endpoint) UpdatePod(pod *corev1.Pod) {
-	ep.Pod.Store(datalayer.FromAPIPod(pod))
+	ep.Pod.Store(dltypes.FromAPIPod(pod))
 }
 
 // GetMetrics returns the Metrics of the endpoint.
-func (ep *Endpoint) GetMetrics() *datalayer.Metrics {
+func (ep *Endpoint) GetMetrics() *dltypes.Metrics {
 	return ep.Metrics.Load()
 }
 
 // UpdateMetrics sets the Metrics field of the endpoint.
-func (ep *Endpoint) UpdateMetrics(metrics *datalayer.Metrics) {
+func (ep *Endpoint) UpdateMetrics(metrics *dltypes.Metrics) {
 	ep.Metrics.Store(metrics)
 }
 
 // Get returns an attribute value for the named key.
-func (ep *Endpoint) Get(key string) (datalayer.Cloneable, bool) {
+func (ep *Endpoint) Get(key string) (dltypes.Cloneable, bool) {
 	return ep.attr.Get(key)
 }
 
@@ -78,7 +78,7 @@ func (ep *Endpoint) Keys() []string {
 }
 
 // Put sets an attribute value associated with the endpoint.
-func (ep *Endpoint) Put(key string, val datalayer.Cloneable) {
+func (ep *Endpoint) Put(key string, val dltypes.Cloneable) {
 	ep.attr.Put(key, val)
 }
 

@@ -35,7 +35,8 @@ import (
 
 	"sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/mocks"
+	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datastore"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/handlers"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/plugins"
@@ -92,7 +93,7 @@ func TestDirector_HandleRequest(t *testing.T) {
 		ObjRef()
 
 	// Datastore setup
-	pmf := backendmetrics.NewPodMetricsFactory(&backendmetrics.FakePodMetricsClient{}, time.Second)
+	pmf := backendmetrics.NewPodMetricsFactory(mocks.NewMetricsClient(nil, nil), time.Second)
 	ds := datastore.NewDatastore(t.Context(), pmf)
 	ds.ModelSetIfOlder(imFoodReview)
 	ds.ModelSetIfOlder(imFoodReviewResolve)
@@ -134,7 +135,7 @@ func TestDirector_HandleRequest(t *testing.T) {
 			"testProfile": {
 				TargetPod: &schedulingtypes.ScoredPod{
 					Pod: &schedulingtypes.PodMetrics{
-						PodInfo: &datalayer.PodInfo{
+						PodInfo: &dltypes.PodInfo{
 							Address:        "192.168.1.100",
 							NamespacedName: k8stypes.NamespacedName{Name: "pod1", Namespace: "default"},
 						},
@@ -167,7 +168,7 @@ func TestDirector_HandleRequest(t *testing.T) {
 			wantReqCtx: &handlers.RequestContext{
 				Model:               model,
 				ResolvedTargetModel: model,
-				TargetPod: &datalayer.PodInfo{
+				TargetPod: &dltypes.PodInfo{
 					NamespacedName: types.NamespacedName{Namespace: "default", Name: "pod1"},
 					Address:        "192.168.1.100",
 				},
@@ -192,7 +193,7 @@ func TestDirector_HandleRequest(t *testing.T) {
 			wantReqCtx: &handlers.RequestContext{
 				Model:               model,
 				ResolvedTargetModel: model,
-				TargetPod: &datalayer.PodInfo{
+				TargetPod: &dltypes.PodInfo{
 					NamespacedName: types.NamespacedName{Namespace: "default", Name: "pod1"},
 					Address:        "192.168.1.100",
 				},
@@ -221,7 +222,7 @@ func TestDirector_HandleRequest(t *testing.T) {
 			wantReqCtx: &handlers.RequestContext{
 				Model:               model,
 				ResolvedTargetModel: model,
-				TargetPod: &datalayer.PodInfo{
+				TargetPod: &dltypes.PodInfo{
 					NamespacedName: types.NamespacedName{Namespace: "default", Name: "pod1"},
 					Address:        "192.168.1.100",
 				},
@@ -242,7 +243,7 @@ func TestDirector_HandleRequest(t *testing.T) {
 			wantReqCtx: &handlers.RequestContext{
 				Model:               modelSheddable,
 				ResolvedTargetModel: modelSheddable,
-				TargetPod: &datalayer.PodInfo{
+				TargetPod: &dltypes.PodInfo{
 					NamespacedName: types.NamespacedName{Namespace: "default", Name: "pod1"},
 					Address:        "192.168.1.100",
 				},
@@ -263,7 +264,7 @@ func TestDirector_HandleRequest(t *testing.T) {
 			wantReqCtx: &handlers.RequestContext{
 				Model:               modelWithResolvedTarget,
 				ResolvedTargetModel: "resolved-target-model-A",
-				TargetPod: &datalayer.PodInfo{
+				TargetPod: &dltypes.PodInfo{
 					NamespacedName: types.NamespacedName{Namespace: "default", Name: "pod1"},
 					Address:        "192.168.1.100",
 				},
@@ -279,7 +280,7 @@ func TestDirector_HandleRequest(t *testing.T) {
 			wantReqCtx: &handlers.RequestContext{
 				Model:               "food-review-1",
 				ResolvedTargetModel: "food-review-1",
-				TargetPod: &datalayer.PodInfo{
+				TargetPod: &dltypes.PodInfo{
 					NamespacedName: types.NamespacedName{Namespace: "default", Name: "pod1"},
 					Address:        "192.168.1.100",
 				},
@@ -428,13 +429,13 @@ func TestGetCandidatePodsForScheduling(t *testing.T) {
 		},
 	}
 
-	outputPod1 := &datalayer.PodInfo{
+	outputPod1 := &dltypes.PodInfo{
 		NamespacedName: types.NamespacedName{Name: "pod1"},
 		Address:        "10.0.0.1",
 		Labels:         map[string]string{},
 	}
 
-	outputPod2 := &datalayer.PodInfo{
+	outputPod2 := &dltypes.PodInfo{
 		NamespacedName: types.NamespacedName{Name: "pod2"},
 		Address:        "10.0.0.2",
 		Labels:         map[string]string{},
@@ -451,11 +452,11 @@ func TestGetCandidatePodsForScheduling(t *testing.T) {
 			output: []schedulingtypes.Pod{
 				&schedulingtypes.PodMetrics{
 					PodInfo: outputPod1,
-					Metrics: datalayer.NewMetrics(),
+					Metrics: dltypes.NewMetrics(),
 				},
 				&schedulingtypes.PodMetrics{
 					PodInfo: outputPod2,
-					Metrics: datalayer.NewMetrics(),
+					Metrics: dltypes.NewMetrics(),
 				},
 			},
 		},
@@ -465,11 +466,11 @@ func TestGetCandidatePodsForScheduling(t *testing.T) {
 			output: []schedulingtypes.Pod{
 				&schedulingtypes.PodMetrics{
 					PodInfo: outputPod1,
-					Metrics: datalayer.NewMetrics(),
+					Metrics: dltypes.NewMetrics(),
 				},
 				&schedulingtypes.PodMetrics{
 					PodInfo: outputPod2,
-					Metrics: datalayer.NewMetrics(),
+					Metrics: dltypes.NewMetrics(),
 				},
 			},
 		},
@@ -484,7 +485,7 @@ func TestGetCandidatePodsForScheduling(t *testing.T) {
 			output: []schedulingtypes.Pod{
 				&schedulingtypes.PodMetrics{
 					PodInfo: outputPod1,
-					Metrics: datalayer.NewMetrics(),
+					Metrics: dltypes.NewMetrics(),
 				},
 			},
 		},
@@ -494,11 +495,11 @@ func TestGetCandidatePodsForScheduling(t *testing.T) {
 			output: []schedulingtypes.Pod{
 				&schedulingtypes.PodMetrics{
 					PodInfo: outputPod1,
-					Metrics: datalayer.NewMetrics(),
+					Metrics: dltypes.NewMetrics(),
 				},
 				&schedulingtypes.PodMetrics{
 					PodInfo: outputPod2,
-					Metrics: datalayer.NewMetrics(),
+					Metrics: dltypes.NewMetrics(),
 				},
 			},
 		},
@@ -509,7 +510,7 @@ func TestGetCandidatePodsForScheduling(t *testing.T) {
 		},
 	}
 
-	pmf := backendmetrics.NewPodMetricsFactory(&backendmetrics.FakePodMetricsClient{}, time.Second)
+	pmf := backendmetrics.NewPodMetricsFactory(mocks.NewMetricsClient(nil, nil), time.Second)
 	ds := datastore.NewDatastore(t.Context(), pmf)
 	for _, testPod := range testInput {
 		ds.PodUpdateOrAddIfNotExist(testPod)
@@ -632,7 +633,7 @@ func TestGetRandomPod(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			pmf := backendmetrics.NewPodMetricsFactory(&backendmetrics.FakePodMetricsClient{}, time.Millisecond)
+			pmf := backendmetrics.NewPodMetricsFactory(mocks.NewMetricsClient(nil, nil), time.Millisecond)
 			ds := datastore.NewDatastore(t.Context(), pmf)
 			for _, pod := range test.storePods {
 				ds.PodUpdateOrAddIfNotExist(pod)
@@ -672,7 +673,7 @@ func TestDirector_HandleResponse(t *testing.T) {
 			Headers: map[string]string{"X-Test-Response-Header": "TestValue"},
 		},
 
-		TargetPod: &datalayer.PodInfo{NamespacedName: types.NamespacedName{Namespace: "namespace1", Name: "test-pod-name"}},
+		TargetPod: &dltypes.PodInfo{NamespacedName: types.NamespacedName{Namespace: "namespace1", Name: "test-pod-name"}},
 	}
 
 	_, err := director.HandleResponse(ctx, reqCtx)
@@ -711,7 +712,7 @@ func (p *testPostResponse) TypedName() plugins.TypedName {
 	return p.tn
 }
 
-func (p *testPostResponse) PostResponse(_ context.Context, _ *schedulingtypes.LLMRequest, response *Response, targetPod *datalayer.PodInfo) {
+func (p *testPostResponse) PostResponse(_ context.Context, _ *schedulingtypes.LLMRequest, response *Response, targetPod *dltypes.PodInfo) {
 	p.lastRespOnResponse = response
 	p.lastTargetPodOnResponse = targetPod.NamespacedName.String()
 }

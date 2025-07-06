@@ -36,6 +36,7 @@ import (
 	tlsutil "sigs.k8s.io/gateway-api-inference-extension/internal/tls"
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/controller"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/mocks"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datastore"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/handlers"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/requestcontrol"
@@ -57,7 +58,7 @@ type ExtProcServerRunner struct {
 
 	// This should only be used in tests. We won't need this once we do not inject metrics in the tests.
 	// TODO:(https://github.com/kubernetes-sigs/gateway-api-inference-extension/issues/432) Cleanup
-	TestPodMetricsClient *backendmetrics.FakePodMetricsClient
+	TestPodMetricsClient *mocks.MetricsClient
 }
 
 // Default values for CLI flags in main

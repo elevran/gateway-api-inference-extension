@@ -58,7 +58,8 @@ import (
 
 	"sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/mocks"
+	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datastore"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/metrics"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/requestcontrol"
@@ -144,7 +145,7 @@ func TestFullDuplexStreamed_KubeInferenceModelRequest(t *testing.T) {
 	tests := []struct {
 		name              string
 		requests          []*extProcPb.ProcessingRequest
-		pods              map[*datalayer.PodInfo]*datalayer.Metrics
+		pods              map[*dltypes.PodInfo]*dltypes.Metrics
 		wantResponses     []*extProcPb.ProcessingResponse
 		wantMetrics       map[string]string
 		wantErr           bool
@@ -862,9 +863,9 @@ func TestFullDuplexStreamed_KubeInferenceModelRequest(t *testing.T) {
 	}
 }
 
-func setUpHermeticServer(t *testing.T, podAndMetrics map[*datalayer.PodInfo]*datalayer.Metrics) (client extProcPb.ExternalProcessor_ProcessClient, cleanup func()) {
+func setUpHermeticServer(t *testing.T, podAndMetrics map[*dltypes.PodInfo]*dltypes.Metrics) (client extProcPb.ExternalProcessor_ProcessClient, cleanup func()) {
 	// Reconfigure the TestPodMetricsClient.
-	res := map[types.NamespacedName]*datalayer.Metrics{}
+	res := map[types.NamespacedName]*dltypes.Metrics{}
 	for pod, metrics := range podAndMetrics {
 		res[pod.NamespacedName] = metrics
 	}
@@ -938,8 +939,8 @@ func setUpHermeticServer(t *testing.T, podAndMetrics map[*datalayer.PodInfo]*dat
 	}
 }
 
-func fakePod(index int) *datalayer.PodInfo {
-	return &datalayer.PodInfo{
+func fakePod(index int) *dltypes.PodInfo {
+	return &dltypes.PodInfo{
 		NamespacedName: types.NamespacedName{Name: fmt.Sprintf("pod-%v", index), Namespace: testNamespace},
 		Address:        fmt.Sprintf("192.168.1.%d", index+1),
 		Labels:         make(map[string]string, 0),
@@ -955,15 +956,15 @@ type podState struct {
 }
 
 // newPodStates generates the backend metrics map required by the test setup.
-func newPodStates(states ...podState) map[*datalayer.PodInfo]*datalayer.Metrics {
-	res := make(map[*datalayer.PodInfo]*datalayer.Metrics)
+func newPodStates(states ...podState) map[*dltypes.PodInfo]*dltypes.Metrics {
+	res := make(map[*dltypes.PodInfo]*dltypes.Metrics)
 	for _, s := range states {
 		pod := fakePod(s.index)
 		activeModelsMap := make(map[string]int)
 		for _, model := range s.activeModels {
 			activeModelsMap[model] = 1
 		}
-		res[pod] = &datalayer.Metrics{
+		res[pod] = &dltypes.Metrics{
 			WaitingQueueSize:    s.queueSize,
 			KVCacheUsagePercent: s.kvCacheUsage,
 			ActiveModels:        activeModelsMap,
@@ -1014,7 +1015,7 @@ func BeforeSuite() func() {
 	}
 
 	serverRunner = server.NewDefaultExtProcServerRunner()
-	serverRunner.TestPodMetricsClient = &backendmetrics.FakePodMetricsClient{}
+	serverRunner.TestPodMetricsClient = mocks.NewMetricsClient(nil, nil)
 	pmf := backendmetrics.NewPodMetricsFactory(serverRunner.TestPodMetricsClient, 10*time.Millisecond)
 	// Adjust from defaults
 	serverRunner.PoolNamespacedName = types.NamespacedName{Name: testPoolName, Namespace: testNamespace}

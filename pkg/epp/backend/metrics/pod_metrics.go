@@ -28,7 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend"
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
+	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
 	logutil "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/util/logging"
 )
 
@@ -50,7 +50,7 @@ type podMetrics struct {
 	logger logr.Logger
 }
 
-type Addressable = datalayer.Addressable
+type Addressable = dltypes.Addressable
 
 type PodMetricsClient interface {
 	FetchMetrics(ctx context.Context, ep Addressable, existing *MetricsState, port int32) (*MetricsState, error)

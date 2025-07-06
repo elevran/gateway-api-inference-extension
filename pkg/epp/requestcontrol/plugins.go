@@ -19,7 +19,7 @@ package requestcontrol
 import (
 	"context"
 
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
+	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/plugins"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/scheduling/types"
 )
@@ -40,5 +40,5 @@ type PreRequest interface {
 // The given pod argument is the pod that served the request.
 type PostResponse interface {
 	plugins.Plugin
-	PostResponse(ctx context.Context, request *types.LLMRequest, response *Response, targetPod *datalayer.PodInfo)
+	PostResponse(ctx context.Context, request *types.LLMRequest, response *Response, targetPod *dltypes.PodInfo)
 }
