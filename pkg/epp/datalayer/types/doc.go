@@ -20,9 +20,9 @@ package types
 // To avoid circular dependency store basic types in this directory
 // and complex implementations in the root directory (including those that
 // depend on backend/metrics package during the refactor; (e.g., Endpoint
-// implemented via backend/metrics.PodMetrics)).
+// implemented via backend/metrics.PodMetrics).
 // An alternative would have been to create an explicit `impl`` package under
 // datalayer and move the implementations there while keeping interfaces at
-// the root. The root would then.
+// the root.
 // At the end of the day, selecting types or impl is a matter of preference and
 // consistency - either works...

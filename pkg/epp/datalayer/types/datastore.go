@@ -37,13 +37,14 @@ type InferencePoolSetter interface {
 	// is nil, this call triggers the datastore.Clear() function.
 	PoolSet(ctx context.Context, reader client.Reader, pool *v1alpha2.InferencePool) error
 	// Clears the store state, happens when the pool gets deleted or reset.
+	// TODO: replace with PoolSet(nil)
 	Clear()
 }
 
 type InferencePoolGetter interface {
 	// InferencePool operations
 	PoolGet() (*v1alpha2.InferencePool, error)
-	PoolHasSynced() bool
+	PoolHasSynced() bool // TODO: remove
 	PoolLabelsMatch(podLabels map[string]string) bool
 }
 
@@ -53,6 +54,7 @@ type InferenceModelAccess interface {
 	ModelDelete(namespacedName types.NamespacedName) *v1alpha2.InferenceModel
 
 	ModelGet(modelName string) *v1alpha2.InferenceModel
+	// TODO - private implementation
 	ModelResync(ctx context.Context, reader client.Reader, modelName string) (bool, error)
 	ModelGetAll() []*v1alpha2.InferenceModel
 }

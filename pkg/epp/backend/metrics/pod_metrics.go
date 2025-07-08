@@ -68,6 +68,10 @@ func (pm *podMetrics) GetMetrics() *MetricsState {
 	return pm.metrics.Load()
 }
 
+func (pm *podMetrics) UpdateMetrics(m *MetricsState) {
+	pm.metrics.Store(m)
+}
+
 func (pm *podMetrics) UpdatePod(pod *corev1.Pod) {
 	pm.pod.Store(toInternalPod(pod))
 }
@@ -145,4 +149,16 @@ func (pm *podMetrics) StopRefreshLoop() {
 	pm.stopOnce.Do(func() {
 		close(pm.done)
 	})
+}
+
+func (pm *podMetrics) Put(_ string, _ dltypes.Cloneable) {
+	// noop
+}
+
+func (pm *podMetrics) Get(_ string) (dltypes.Cloneable, bool) {
+	return nil, false
+}
+
+func (pm *podMetrics) Keys() []string {
+	return []string{}
 }

@@ -28,8 +28,10 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
 	"sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
 	backendmetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/backend/metrics"
+	dltypes "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer/types"
 	logutil "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/util/logging"
 	podutil "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/util/pod"
 )
@@ -62,9 +64,9 @@ type Datastore interface {
 
 	// PodMetrics operations
 	// PodGetAll returns all pods and metrics, including fresh and stale.
-	PodGetAll() []backendmetrics.PodMetrics
+	PodGetAll() []dltypes.Endpoint
 	// PodList lists pods matching the given predicate.
-	PodList(predicate func(backendmetrics.PodMetrics) bool) []backendmetrics.PodMetrics
+	PodList(predicate func(dltypes.Endpoint) bool) []dltypes.Endpoint
 	PodUpdateOrAddIfNotExist(pod *corev1.Pod) bool
 	PodDelete(namespacedName types.NamespacedName)
 
@@ -103,7 +105,7 @@ func (ds *datastore) Clear() {
 	ds.models = make(map[string]*v1alpha2.InferenceModel)
 	// stop all pods go routines before clearing the pods map.
 	ds.pods.Range(func(_, v any) bool {
-		v.(backendmetrics.PodMetrics).StopRefreshLoop()
+		v.(dltypes.Endpoint).StopRefreshLoop()
 		return true
 	})
 	ds.pods.Clear()
@@ -244,15 +246,15 @@ func (ds *datastore) ModelGetAll() []*v1alpha2.InferenceModel {
 
 // /// Pods/endpoints APIs ///
 
-func (ds *datastore) PodGetAll() []backendmetrics.PodMetrics {
-	return ds.PodList(func(backendmetrics.PodMetrics) bool { return true })
+func (ds *datastore) PodGetAll() []dltypes.Endpoint {
+	return ds.PodList(func(dltypes.Endpoint) bool { return true })
 }
 
-func (ds *datastore) PodList(predicate func(backendmetrics.PodMetrics) bool) []backendmetrics.PodMetrics {
-	res := []backendmetrics.PodMetrics{}
+func (ds *datastore) PodList(predicate func(dltypes.Endpoint) bool) []dltypes.Endpoint {
+	res := []dltypes.Endpoint{}
 
 	ds.pods.Range(func(k, v any) bool {
-		pm := v.(backendmetrics.PodMetrics)
+		pm := v.(dltypes.Endpoint)
 		if predicate(pm) {
 			res = append(res, pm)
 		}
@@ -267,13 +269,13 @@ func (ds *datastore) PodUpdateOrAddIfNotExist(pod *corev1.Pod) bool {
 		Name:      pod.Name,
 		Namespace: pod.Namespace,
 	}
-	var pm backendmetrics.PodMetrics
+	var pm dltypes.Endpoint
 	existing, ok := ds.pods.Load(namespacedName)
 	if !ok {
 		pm = ds.pmf.NewPodMetrics(ds.parentCtx, pod, ds)
 		ds.pods.Store(namespacedName, pm)
 	} else {
-		pm = existing.(backendmetrics.PodMetrics)
+		pm = existing.(dltypes.Endpoint)
 	}
 	// Update pod properties if anything changed.
 	pm.UpdatePod(pod)
@@ -283,7 +285,7 @@ func (ds *datastore) PodUpdateOrAddIfNotExist(pod *corev1.Pod) bool {
 func (ds *datastore) PodDelete(namespacedName types.NamespacedName) {
 	v, ok := ds.pods.LoadAndDelete(namespacedName)
 	if ok {
-		pmr := v.(backendmetrics.PodMetrics)
+		pmr := v.(dltypes.Endpoint)
 		pmr.StopRefreshLoop()
 	}
 }
@@ -314,7 +316,7 @@ func (ds *datastore) podResyncAll(ctx context.Context, reader client.Reader) err
 
 	// Remove pods that don't belong to the pool or not ready any more.
 	ds.pods.Range(func(k, v any) bool {
-		pm := v.(backendmetrics.PodMetrics)
+		pm := v.(dltypes.Endpoint)
 		if exist := activePods[pm.GetPod().NamespacedName.Name]; !exist {
 			logger.V(logutil.VERBOSE).Info("Removing pod", "pod", pm.GetPod())
 			ds.PodDelete(pm.GetPod().NamespacedName)
