@@ -33,10 +33,12 @@ import (
 	"github.com/spf13/pflag"
 	"google.golang.org/grpc"
 	healthPb "google.golang.org/grpc/health/grpc_health_v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
+	toolscache "k8s.io/client-go/tools/cache"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -60,9 +62,11 @@ import (
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/flowcontrol/framework/plugins/fairness"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/flowcontrol/framework/plugins/ordering"
 	fcregistry "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/flowcontrol/registry"
+	fwkdl "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/framework/interface/datalayer"
 	fwkplugin "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/framework/interface/plugin"
 	extractormetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/framework/plugins/datalayer/extractor/metrics"
 	sourcemetrics "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/framework/plugins/datalayer/source/metrics"
+	sourcenotification "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/framework/plugins/datalayer/source/notification"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/framework/plugins/requestcontrol/requestattributereporter"
 	testresponsereceived "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/framework/plugins/requestcontrol/test/responsereceived"
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/framework/plugins/scheduling/picker"
@@ -273,7 +277,7 @@ func (r *Runner) Run(ctx context.Context) error {
 	scheduler := scheduling.NewSchedulerWithConfig(r.schedulerConfig)
 
 	datalayerMetricsEnabled := r.featureGates[datalayer.ExperimentalDatalayerFeatureGate]
-	if err := r.setupDataLayer(datalayerMetricsEnabled, eppConfig.DataConfig, epf); err != nil {
+	if err := r.setupDataLayer(ctx, mgr, datalayerMetricsEnabled, eppConfig.DataConfig, epf); err != nil {
 		setupLog.Error(err, "failed to initialize data layer")
 		return err
 	}
@@ -396,6 +400,8 @@ func (r *Runner) registerInTreePlugins() {
 	// register datalayer metrics collection plugins
 	fwkplugin.Register(sourcemetrics.MetricsDataSourceType, sourcemetrics.MetricsDataSourceFactory)
 	fwkplugin.Register(extractormetrics.MetricsExtractorType, extractormetrics.ModelServerExtractorFactory)
+	// register datalayer k8s notification source plugin
+	fwkplugin.Register(sourcenotification.NotificationSourceType, sourcenotification.NotificationSourceFactory)
 	fwkplugin.Register(requestattributereporter.RequestAttributeReporterType, requestattributereporter.RequestAttributeReporterPluginFactory)
 }
 
@@ -518,7 +524,7 @@ func (r *Runner) applyDeprecatedSaturationConfig(cfg *config.Config) {
 	}
 }
 
-func (r *Runner) setupDataLayer(enableNewMetrics bool, cfg *datalayer.Config, epf datalayer.EndpointFactory) error {
+func (r *Runner) setupDataLayer(ctx context.Context, mgr ctrl.Manager, enableNewMetrics bool, cfg *datalayer.Config, epf datalayer.EndpointFactory) error {
 	disallowedMetricsExtractor := ""
 	if !enableNewMetrics { // using backend.PodMetrics, disallow datalayer's metrics data source/extractor
 		disallowedMetricsExtractor = extractormetrics.MetricsExtractorType
@@ -528,17 +534,87 @@ func (r *Runner) setupDataLayer(enableNewMetrics bool, cfg *datalayer.Config, ep
 		return err
 	}
 
-	sources := datalayer.GetSources()
-	if enableNewMetrics && len(sources) == 0 {
-		err := errors.New("data layer enabled but no data sources configured")
-		return err
+	allSources := datalayer.GetSources()
+	if enableNewMetrics && len(allSources) == 0 {
+		return errors.New("data layer enabled but no data sources configured")
 	}
 
-	epf.SetSources(sources)
-	for _, src := range sources {
+	// Partition sources: poll-based go to the endpoint factory, notification
+	// sources get bound to the manager's cache.
+	var pollSources []fwkdl.DataSource
+	for _, src := range allSources {
+		if ns, ok := src.(fwkdl.NotificationSource); ok {
+			if err := bindNotificationSource(ctx, mgr, ns); err != nil {
+				return fmt.Errorf("failed to bind notification source %s: %w", ns.TypedName(), err)
+			}
+			setupLog.Info("notification source bound", "source", ns.TypedName().String(), "gvk", ns.GVK(), "extractors", ns.Extractors())
+		} else {
+			pollSources = append(pollSources, src)
+		}
+	}
+
+	epf.SetSources(pollSources)
+	for _, src := range pollSources {
 		setupLog.Info("data layer configuration", "source", src.TypedName().String(), "extractors", src.Extractors())
 	}
 	return nil
+}
+
+// bindNotificationSource registers an informer event handler for the source's GVK.
+// The framework core owns the cache and reconciliation; the source only receives
+// deep-copied events via Notify.
+func bindNotificationSource(ctx context.Context, mgr ctrl.Manager, src fwkdl.NotificationSource) error {
+	obj := &unstructured.Unstructured{}
+	obj.SetGroupVersionKind(src.GVK())
+
+	informer, err := mgr.GetCache().GetInformer(ctx, obj)
+	if err != nil {
+		return fmt.Errorf("failed to get informer for %s: %w", src.GVK(), err)
+	}
+
+	_, err = informer.AddEventHandler(toolscache.ResourceEventHandlerFuncs{
+		AddFunc: func(o interface{}) {
+			u, ok := toUnstructured(o)
+			if !ok {
+				return
+			}
+			src.Notify(ctx, fwkdl.NotificationEvent{
+				Type:   fwkdl.EventAddOrUpdate,
+				Object: u.DeepCopy(),
+			})
+		},
+		UpdateFunc: func(_, newObj interface{}) {
+			u, ok := toUnstructured(newObj)
+			if !ok {
+				return
+			}
+			src.Notify(ctx, fwkdl.NotificationEvent{
+				Type:   fwkdl.EventAddOrUpdate,
+				Object: u.DeepCopy(),
+			})
+		},
+		DeleteFunc: func(o interface{}) {
+			// Handle tombstone (DeletedFinalStateUnknown) wrapping.
+			if d, ok := o.(toolscache.DeletedFinalStateUnknown); ok {
+				o = d.Obj
+			}
+			u, ok := toUnstructured(o)
+			if !ok {
+				return
+			}
+			src.Notify(ctx, fwkdl.NotificationEvent{
+				Type:   fwkdl.EventDelete,
+				Object: u.DeepCopy(),
+			})
+		},
+	})
+	return err
+}
+
+// toUnstructured converts a runtime object to *unstructured.Unstructured.
+func toUnstructured(obj interface{}) (*unstructured.Unstructured, bool) {
+	u, ok := obj.(*unstructured.Unstructured)
+	return u, ok
 }
 
 func (r *Runner) setupMetricsCollection(enableNewMetrics bool, opts *runserver.Options) (datalayer.EndpointFactory, error) {
