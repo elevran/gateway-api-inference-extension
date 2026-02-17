@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package source
+package datalayer
 
 import (
 	"reflect"
@@ -33,10 +33,10 @@ func TestValidateInputTypeCompatible(t *testing.T) {
 		input  reflect.Type
 		valid  bool
 	}{
-		{"exact match", typeOf(rawStruct{}), typeOf(rawStruct{}), true},
-		{"input is interface{}", typeOf(rawStruct{}), typeOf((*any)(nil)), true},
-		{"nil types are not allowed", typeOf(rawStruct{}), typeOf(nil), false},
-		{"output does not implement input", typeOf(rawStruct{}), typeOf((*iface)(nil)), false},
+		{"exact match", typeOfT(rawStruct{}), typeOfT(rawStruct{}), true},
+		{"input is interface{}", typeOfT(rawStruct{}), typeOfT((*any)(nil)), true},
+		{"nil types are not allowed", typeOfT(rawStruct{}), typeOfT(nil), false},
+		{"output does not implement input", typeOfT(rawStruct{}), typeOfT((*iface)(nil)), false},
 	}
 
 	for _, tt := range tests {
@@ -107,7 +107,7 @@ func TestTypeConstants(t *testing.T) {
 	assert.True(t, NotificationExtractorType.Kind() == reflect.Interface, "NotificationExtractorType should be an interface")
 }
 
-func typeOf(v any) reflect.Type {
+func typeOfT(v any) reflect.Type {
 	t := reflect.TypeOf(v)
 	if t == nil {
 		return nil

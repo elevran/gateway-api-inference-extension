@@ -21,7 +21,6 @@ import (
 	"reflect"
 
 	fwkdl "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/framework/interface/datalayer"
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/framework/plugins/datalayer/source"
 )
 
 // Config defines the configuration of EPP data layer, as the set of DataSources
@@ -57,13 +56,13 @@ func WithConfig(cfg *Config, disallowedExtractorType string) error {
 					extractor.TypedName().String(), srcCfg.Plugin.TypedName().String())
 			}
 			// Validate extractor input type is compatible with datasource output type
-			if err := source.ValidateInputTypeCompatible(srcCfg.Plugin.OutputType(), extractor.ExpectedInputType()); err != nil {
+			if err := ValidateInputTypeCompatible(srcCfg.Plugin.OutputType(), extractor.ExpectedInputType()); err != nil {
 				return fmt.Errorf("extractor %s input type incompatible with datasource %s: %w",
 					extractor.TypedName(), srcCfg.Plugin.TypedName(), err)
 			}
 			// Validate extractor type is compatible with datasource expected extractor type
 			extractorType := reflect.TypeOf(extractor)
-			if err := source.ValidateExtractorCompatible(extractorType, srcCfg.Plugin.ExtractorType()); err != nil {
+			if err := ValidateExtractorCompatible(extractorType, srcCfg.Plugin.ExtractorType()); err != nil {
 				return fmt.Errorf("extractor %s type incompatible with datasource %s: %w",
 					extractor.TypedName(), srcCfg.Plugin.TypedName(), err)
 			}

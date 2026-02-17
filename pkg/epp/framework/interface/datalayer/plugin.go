@@ -23,6 +23,12 @@ import (
 	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/framework/interface/plugin"
 )
 
+var (
+	ExtractorType             = reflect.TypeOf((*Extractor)(nil)).Elem()
+	NotificationExtractorType = reflect.TypeOf((*NotificationExtractor)(nil)).Elem()
+	NotificationEventType     = reflect.TypeOf(NotificationEvent{})
+)
+
 // DataSource provides raw data to registered Extractors.
 type DataSource interface {
 	plugin.Plugin

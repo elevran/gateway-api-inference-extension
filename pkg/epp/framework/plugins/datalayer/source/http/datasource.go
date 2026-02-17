@@ -28,7 +28,6 @@ import (
 
 	fwkdl "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/framework/interface/datalayer"
 	fwkplugin "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/framework/interface/plugin"
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/framework/plugins/datalayer/source"
 )
 
 // HTTPDataSource is a data source that receives its data using HTTP client.
@@ -84,7 +83,7 @@ func (dataSrc *HTTPDataSource) OutputType() reflect.Type {
 
 // ExtractorType returns the type of Extractor this DataSource expects.
 func (dataSrc *HTTPDataSource) ExtractorType() reflect.Type {
-	return source.ExtractorType
+	return fwkdl.ExtractorType
 }
 
 // Extractors returns a list of registered Extractor names.
@@ -99,12 +98,9 @@ func (dataSrc *HTTPDataSource) Extractors() []string {
 	return extractors
 }
 
-// AddExtractor adds an extractor to the data source, validating it can process
-// the data source output type.
+// AddExtractor adds an extractor to the data source.
+// Validation of extractor compatibility is done by the runtime via datalayer.WithConfig.
 func (dataSrc *HTTPDataSource) AddExtractor(extractor fwkdl.Extractor) error {
-	if err := source.ValidateInputTypeCompatible(dataSrc.OutputType(), extractor.ExpectedInputType()); err != nil {
-		return err
-	}
 	if _, loaded := dataSrc.extractors.LoadOrStore(extractor.TypedName().Name, extractor); loaded {
 		return fmt.Errorf("attempt to add duplicate extractor %s to %s", extractor.TypedName(), dataSrc.TypedName())
 	}
