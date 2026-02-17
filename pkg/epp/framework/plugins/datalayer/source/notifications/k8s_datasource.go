@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"sync"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -27,6 +28,7 @@ import (
 
 	fwkdl "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/framework/interface/datalayer"
 	fwkplugin "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/framework/interface/plugin"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/framework/plugins/datalayer/source"
 )
 
 var (
@@ -61,6 +63,16 @@ func (s *K8sNotificationSource) GVK() schema.GroupVersionKind {
 	return s.gvk
 }
 
+// OutputType returns the type of data this DataSource produces (NotificationEvent).
+func (s *K8sNotificationSource) OutputType() reflect.Type {
+	return source.NotificationEventType
+}
+
+// ExtractorType returns the type of Extractor this DataSource expects (NotificationExtractor).
+func (s *K8sNotificationSource) ExtractorType() reflect.Type {
+	return source.NotificationExtractorType
+}
+
 // Extractors returns names of registered extractors.
 func (s *K8sNotificationSource) Extractors() []string {
 	var names []string
@@ -79,10 +91,12 @@ func (s *K8sNotificationSource) AddExtractor(ext fwkdl.Extractor) error {
 	if ext == nil {
 		return errors.New("cannot add nil extractor")
 	}
-	notifyExt, ok := ext.(fwkdl.NotificationExtractor)
-	if !ok {
-		return fmt.Errorf("extractor %s does not implement NotificationExtractor", ext.TypedName())
+	extractorType := reflect.TypeOf(ext)
+	expectedType := reflect.TypeOf((*fwkdl.NotificationExtractor)(nil)).Elem()
+	if err := source.ValidateExtractorCompatible(extractorType, expectedType); err != nil {
+		return err
 	}
+	notifyExt := ext.(fwkdl.NotificationExtractor)
 	if _, loaded := s.extractors.LoadOrStore(notifyExt.TypedName().Name, notifyExt); loaded {
 		return fmt.Errorf("duplicate extractor %s on notification source %s",
 			notifyExt.TypedName(), s.TypedName())

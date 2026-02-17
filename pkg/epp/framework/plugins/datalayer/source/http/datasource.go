@@ -26,9 +26,9 @@ import (
 	"reflect"
 	"sync"
 
-	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/datalayer"
 	fwkdl "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/framework/interface/datalayer"
 	fwkplugin "sigs.k8s.io/gateway-api-inference-extension/pkg/epp/framework/interface/plugin"
+	"sigs.k8s.io/gateway-api-inference-extension/pkg/epp/framework/plugins/datalayer/source"
 )
 
 // HTTPDataSource is a data source that receives its data using HTTP client.
@@ -77,6 +77,16 @@ func (dataSrc *HTTPDataSource) TypedName() fwkplugin.TypedName {
 	return dataSrc.typedName
 }
 
+// OutputType returns the type of data this DataSource produces.
+func (dataSrc *HTTPDataSource) OutputType() reflect.Type {
+	return dataSrc.outputType
+}
+
+// ExtractorType returns the type of Extractor this DataSource expects.
+func (dataSrc *HTTPDataSource) ExtractorType() reflect.Type {
+	return source.ExtractorType
+}
+
 // Extractors returns a list of registered Extractor names.
 func (dataSrc *HTTPDataSource) Extractors() []string {
 	extractors := []string{}
@@ -92,7 +102,7 @@ func (dataSrc *HTTPDataSource) Extractors() []string {
 // AddExtractor adds an extractor to the data source, validating it can process
 // the data source output type.
 func (dataSrc *HTTPDataSource) AddExtractor(extractor fwkdl.Extractor) error {
-	if err := datalayer.ValidateExtractorType(dataSrc.outputType, extractor.ExpectedInputType()); err != nil {
+	if err := source.ValidateInputTypeCompatible(dataSrc.OutputType(), extractor.ExpectedInputType()); err != nil {
 		return err
 	}
 	if _, loaded := dataSrc.extractors.LoadOrStore(extractor.TypedName().Name, extractor); loaded {
